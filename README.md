@@ -13,6 +13,11 @@ Actual is a free, open-source, local-first budgeting app. This version adds:
 
 See **[CUSTOM.md](CUSTOM.md)** for the full details.
 
+## Bank sync with Plaid
+
+I sync my banks into Actual with Plaid, using a separate app that runs next to it.
+See **[PLAID.md](PLAID.md)** for how I use it and how to set it up.
+
 ## Run it with Docker
 
 Use this image in place of `actualbudget/actual-server`:

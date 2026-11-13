@@ -4,7 +4,7 @@ import { useGlobalPref } from '#hooks/useGlobalPref';
 import { usePreferredDarkTheme, useTheme } from '#style/theme';
 
 const VAR_STRING_REGEX = /^var\((--.*)\)$/;
-const DEFAULT_THEME_COLOR = '#5c3dbb';
+const DEFAULT_THEME_COLOR = '#1c3a23';
 
 /**
  * Sets the theme-color meta tag (for browsers that use it) and document.body

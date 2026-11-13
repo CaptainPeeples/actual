@@ -384,7 +384,13 @@ function ExpenseGroupCells({
                 minFontSizePx={6}
                 maxFontSizePx={12}
                 mode="oneline"
-                style={amountStyle}
+                style={{
+                  ...amountStyle,
+                  // Custom branch: red when the whole group is negative.
+                  ...(typeof value === 'number' && value < 0
+                    ? { color: theme.budgetBalanceNegative }
+                    : {}),
+                }}
               >
                 {format(value, type)}
               </AutoTextSize>

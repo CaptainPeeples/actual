@@ -611,11 +611,7 @@ function Banners({ month, onBudgetAction }) {
       style={{ backgroundColor: theme.mobilePageBackground }}
     >
       <UncategorizedTransactionsBanner />
-      <OverspendingBanner
-        month={month}
-        onBudgetAction={onBudgetAction}
-        budgetType={budgetType}
-      />
+      {/* Custom branch: overspending banner hidden on the phone. */}
       {budgetType === 'envelope' && (
         <OverbudgetedBanner month={month} onBudgetAction={onBudgetAction} />
       )}

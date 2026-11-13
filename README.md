@@ -1,83 +1,48 @@
-<p align="center">
-  <img src="/demo.png" alt="Actualbudget" />
-</p>
+# Actual Budget — CaptainPeeples Edition
 
-## Getting Started
+A custom build of [Actual Budget](https://github.com/actualbudget/actual) (based on v26.11.0), kept by [CaptainPeeples](https://github.com/CaptainPeeples).
 
-Actual is a local-first personal finance tool. It is 100% free and open-source, written in NodeJS, it has a synchronization element so that all your changes can move between devices without any heavy lifting.
+Actual is a free, open-source, local-first budgeting app. This version adds:
 
-If you are interested in contributing, or want to know how development works, see our [contributing](https://actualbudget.org/docs/contributing/) document we would love to have you.
+- **Hunter green** dark theme
+- **Pure red** negative balances on the budget page
+- **Projected end of month** box for tracking budgets
+- Report cards that read **tracking budget** data
+- New budgets start in **tracking mode** with a generic category list (no amounts)
+- Phone layout tweaks (no overspent banner, groups start collapsed)
 
-Want to say thanks? Click the ⭐ at the top of the page.
+See **[CUSTOM.md](CUSTOM.md)** for the full details.
 
-## Key Links
+## Run it with Docker
 
-- Actual [discord](https://discord.gg/pRYNYr4W5A) community.
-- Actual [Community Documentation](https://actualbudget.org/docs)
-- [Frequently asked questions](https://actualbudget.org/docs/faq)
+Use this image in place of `actualbudget/actual-server`:
 
-## Installation
+```
+ghcr.io/captainpeeples/actual:latest
+```
 
-There are four ways to deploy Actual:
+Example `compose.yaml`:
 
-1. One-click deployment [via PikaPods](https://www.pikapods.com/pods?run=actual) (~2.00 $/month) - recommended for non-technical users
-1. Managed hosting [via Fly.io](https://actualbudget.org/docs/install/fly) (~1.50 $/month)
-1. Self-hosted by using [a Docker image](https://actualbudget.org/docs/install/docker)
-1. Local-only apps - [downloadable Windows, Mac and Linux apps](https://actualbudget.org/download/) you can run on your device
+```yaml
+services:
+  actual:
+    image: ghcr.io/captainpeeples/actual:latest
+    container_name: actual
+    restart: unless-stopped
+    ports:
+      - 5006:5006
+    volumes:
+      - ./data:/data
+```
 
-Learn more in the [installation instructions docs](https://actualbudget.org/docs/install/).
+Then open `http://localhost:5006`. Your data stays in the `data` folder.
 
-## Ready to Start Budgeting?
+## Help with Actual itself
 
-Read about [Envelope budgeting](https://actualbudget.org/docs/getting-started/envelope-budgeting) to know more about the idea behind Actual Budget.
+For how to use Actual, see the [Actual docs](https://actualbudget.org/docs).
+Problems with the custom changes in this version? Open an issue on this repo.
 
-### Are you new to budgeting or want to start fresh?
+## Credit and license
 
-Check out the community's [Starting Fresh](https://actualbudget.org/docs/getting-started/starting-fresh) guide so you can quickly get up and running!
-
-### Are you migrating from other budgeting apps?
-
-Check out the community's [Migration](https://actualbudget.org/docs/migration/) guide to start jumping on the Actual Budget train!
-
-## Documentation
-
-We have a wide range of documentation on how to use Actual, this is all available in our [Community Documentation](https://actualbudget.org/docs), this includes topics on Budgeting, Account Management, Tips & Tricks and some documentation for developers.
-
-## Contributing
-
-Actual is a community driven product. Learn more about [contributing to Actual](https://actualbudget.org/docs/contributing/).
-
-### Code structure
-
-The Actual app is split up into a few packages:
-
-- loot-core - The core application that runs on any platform
-- desktop-client - The desktop UI
-- desktop-electron - The desktop app
-
-More information on the project structure is available in our [community documentation](https://actualbudget.org/docs/contributing/project-details).
-
-### Feature Requests
-
-Current feature requests can be seen [here](https://github.com/actualbudget/actual/issues?q=is%3Aissue+label%3A%22needs+votes%22+sort%3Areactions-%2B1-desc).
-Vote for your favorite requests by reacting :+1: to the top comment of the request.
-
-To add new feature requests, open a new Issue of the "Feature Request" type.
-
-### Translation
-
-Make Actual Budget accessible to more people by helping with the [Internationalization](https://actualbudget.org/docs/contributing/i18n/) of Actual. We are using a crowd sourcing tool to manage the translations, see our [Weblate Project](https://hosted.weblate.org/projects/actualbudget/). Weblate proudly supports open-source software projects through their [Libre plan](https://weblate.org/en/hosting/#libre).
-
-<a href="https://hosted.weblate.org/engage/actualbudget/">
-<img src="https://hosted.weblate.org/widget/actualbudget/actual/287x66-grey.png" alt="Translation status" />
-</a>
-
-## Sponsors
-
-Thanks to our wonderful sponsors who make Actual Budget possible!
-
-<a href="https://www.netlify.com"><img src="https://www.netlify.com/v3/img/components/netlify-color-accent.svg" alt="Deploys by Netlify" /></a>
-<a href="https://depot.dev"><img src="https://depot.dev/badges/built-with-depot.svg" alt="Built with Depot" /></a>
-<a href="https://www.docker.com"><img src="https://www.docker.com/app/uploads/2023/05/symbol_blue-docker-logo.png" alt="Docker" height="48" /></a>
-<a href="https://github.com"><img src="https://avatars.githubusercontent.com/u/9919?s=200&v=4" alt="GitHub" height="48" /></a>
-<a href="https://www.anthropic.com"><img src="https://avatars.githubusercontent.com/u/76263028?s=200&v=4" alt="Anthropic" height="48" /></a>
+All credit for Actual goes to the [Actual Budget team](https://github.com/actualbudget/actual).
+This fork uses the same [MIT license](LICENSE.txt).

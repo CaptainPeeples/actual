@@ -8,7 +8,7 @@ import { usePreferredDarkTheme, useTheme } from '#style/theme';
 
 import { useMetaThemeColor } from './useMetaThemeColor';
 
-const DEFAULT_THEME_COLOR = '#5c3dbb';
+const DEFAULT_THEME_COLOR = '#1c3a23';
 const originalMatchMedia = window.matchMedia;
 
 function renderThemeColor(color?: string) {
@@ -108,7 +108,7 @@ describe('useMetaThemeColor', () => {
       renderThemeColor('var(--color-mobileViewTheme)');
 
       expect(getThemeColorMeta()).toBe(DEFAULT_THEME_COLOR);
-      expect(document.body.style.backgroundColor).toBe('rgb(92, 61, 187)');
+      expect(document.body.style.backgroundColor).toBe('rgb(28, 58, 35)');
     });
   });
 

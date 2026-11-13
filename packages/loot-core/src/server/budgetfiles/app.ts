@@ -45,6 +45,7 @@ import {
   startBackupService,
   stopBackupService,
 } from './backups';
+import { seedCustomDefaults } from './customDefaults';
 
 const DEMO_BUDGET_ID = '_demo-budget';
 const TEST_BUDGET_ID = '_test-budget';
@@ -489,6 +490,10 @@ async function createBudget({
   if (error) {
     logger.log('Error creating budget: ' + error);
     return { error };
+  }
+
+  if (!testMode) {
+    await seedCustomDefaults();
   }
 
   if (!avoidUpload && !testMode) {

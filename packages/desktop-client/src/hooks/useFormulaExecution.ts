@@ -548,11 +548,18 @@ async function getCategoriesFromConditions(
   }
 }
 
-// Helper: Get month data from envelope-budget-month RPC
+// Helper: Get month data from the budget-month RPC that matches the budget
+// type. Tracking budgets keep income budgets in their own sheet, which the
+// envelope RPC does not return, so income categories read as 0 there.
 async function getMonthBudgetData(
   month: string,
 ): Promise<Array<{ name: string; value: string | number | boolean }>> {
-  const monthData = await send('envelope-budget-month', { month });
+  const prefs = await send('preferences/get');
+  const rpc =
+    prefs?.budgetType === 'tracking'
+      ? 'tracking-budget-month'
+      : 'envelope-budget-month';
+  const monthData = await send(rpc, { month });
   return monthData || [];
 }
 

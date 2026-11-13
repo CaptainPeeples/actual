@@ -185,6 +185,10 @@ export const GroupMonth = memo(function GroupMonth({
           valueProps={{
             binding: trackingBudget.groupBalance(id),
             type: 'financial',
+            getValueStyle: value =>
+              typeof value === 'number' && value < 0
+                ? { color: theme.budgetBalanceNegative }
+                : {},
           }}
         />
       )}

@@ -101,6 +101,8 @@ export type LocalPrefs = Partial<{
   'sidebar.accountsOpenState': Record<string, boolean>;
   'expand-splits': boolean;
   'budget.collapsed': string[];
+  // Custom branch: phone layout keeps groups collapsed unless opened.
+  'budget.mobileExpanded': string[];
   'budget.summaryCollapsed': boolean;
   'budget.showHiddenCategories': boolean;
   'budget.startMonth': string;

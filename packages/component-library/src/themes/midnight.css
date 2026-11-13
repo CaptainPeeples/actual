@@ -43,6 +43,7 @@
   --color-numberNegative: var(--palette-red200);
   --color-numberNeutral: var(--palette-gray500);
   --color-budgetNumberNegative: var(--color-numberNegative);
+  --color-budgetBalanceNegative: #ff0000;
   --color-budgetNumberZero: var(--color-tableTextSubdued);
   --color-budgetNumberNeutral: var(--color-tableText);
   --color-budgetNumberPositive: var(--color-budgetNumberNeutral);

@@ -221,6 +221,7 @@ export const theme = {
   reportsNumberNeutral: 'var(--color-reportsNumberNeutral)',
   budgetNumberPositive: 'var(--color-budgetNumberPositive)',
   budgetNumberNegative: 'var(--color-budgetNumberNegative)',
+  budgetBalanceNegative: 'var(--color-budgetBalanceNegative)',
   budgetNumberNeutral: 'var(--color-budgetNumberNeutral)',
   budgetNumberZero: 'var(--color-budgetNumberZero)',
   toBudgetPositive: 'var(--color-toBudgetPositive)',

@@ -83,7 +83,7 @@ export function makeBalanceAmountStyle(
   const currencyValue = normalizeIntegerValue(value);
 
   if (currencyValue < 0) {
-    return { color: theme.budgetNumberNegative };
+    return { color: theme.budgetBalanceNegative };
   }
 
   if (goalValue == null) {

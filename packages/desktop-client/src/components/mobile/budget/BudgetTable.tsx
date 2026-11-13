@@ -19,6 +19,7 @@ import type {
 } from '@actual-app/core/types/models';
 import { AutoTextSize } from 'auto-text-size';
 
+import { useProjectedEndOfMonth } from '#components/budget/tracking/budgetsummary/ProjectedEndOfMonth';
 import { MOBILE_NAV_HEIGHT } from '#components/mobile/MobileNavTabs';
 import { PullToRefresh } from '#components/mobile/PullToRefresh';
 import { PrivacyFilter } from '#components/PrivacyFilter';
@@ -125,6 +126,80 @@ function ToBudget({ toBudget, onPress, show3Columns }: ToBudgetProps) {
               </View>
             )}
           </CellValue>
+        </View>
+        <SvgCheveronRight
+          style={{
+            flexShrink: 0,
+            color: theme.mobileHeaderTextSubdued,
+            marginLeft: 5,
+          }}
+          width={14}
+          height={14}
+        />
+      </Button>
+    </View>
+  );
+}
+
+// Custom branch: mobile "Projected end of month" for the current month.
+function ProjectedEndOfMonthMobile({
+  month,
+  onPress,
+  show3Columns,
+}: {
+  month: string;
+  onPress: () => void;
+  show3Columns: boolean;
+}) {
+  const { t } = useTranslation();
+  const format = useFormat();
+  const { parts, projected } = useProjectedEndOfMonth(month);
+  const sidebarColumnWidth = getColumnWidth({ show3Columns, isSidebar: true });
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        width: sidebarColumnWidth,
+      }}
+    >
+      <Button variant="bare" onPress={onPress}>
+        <View style={{ alignItems: 'flex-start' }}>
+          <AutoTextSize
+            as={Label}
+            minFontSizePx={6}
+            maxFontSizePx={12}
+            mode="oneline"
+            title={t('Projected end of month')}
+            style={{
+              color: theme.formInputText,
+              textAlign: 'left',
+              fontSize: 12,
+            }}
+          />
+          <PrivacyFilter>
+            <AutoTextSize
+              key={projected}
+              as={Text}
+              minFontSizePx={6}
+              maxFontSizePx={12}
+              mode="oneline"
+              style={{
+                ...styles.tnum,
+                textAlign: 'left',
+                fontSize: 12,
+                fontWeight: '700',
+                color:
+                  projected < 0
+                    ? theme.budgetBalanceNegative
+                    : theme.templateNumberFunded,
+              }}
+            >
+              {parts ? format(projected, 'financial') : '…'}
+            </AutoTextSize>
+          </PrivacyFilter>
         </View>
         <SvgCheveronRight
           style={{
@@ -271,25 +346,28 @@ function BudgetGroups({
     };
   }, [categoryGroups, showHiddenCategories]);
 
-  const [collapsedGroupIds = [], setCollapsedGroupIdsPref] =
-    useLocalPref('budget.collapsed');
+  // Custom branch: groups start collapsed on the phone. We remember the
+  // ones you open instead of the ones you close.
+  const [expandedGroupIds = [], setExpandedGroupIdsPref] = useLocalPref(
+    'budget.mobileExpanded',
+  );
 
   const onToggleCollapse = useCallback(
     (id: CategoryGroupEntity['id']) => {
-      setCollapsedGroupIdsPref(
-        collapsedGroupIds.includes(id)
-          ? collapsedGroupIds.filter(collapsedId => collapsedId !== id)
-          : [...collapsedGroupIds, id],
+      setExpandedGroupIdsPref(
+        expandedGroupIds.includes(id)
+          ? expandedGroupIds.filter(expandedId => expandedId !== id)
+          : [...expandedGroupIds, id],
       );
     },
-    [collapsedGroupIds, setCollapsedGroupIdsPref],
+    [expandedGroupIds, setExpandedGroupIdsPref],
   );
 
   const isCollapsed = useCallback(
     (id: CategoryGroupEntity['id']) => {
-      return collapsedGroupIds.includes(id);
+      return !expandedGroupIds.includes(id);
     },
-    [collapsedGroupIds],
+    [expandedGroupIds],
   );
 
   return (
@@ -462,7 +540,13 @@ function BudgetTableHeader({
           alignItems: 'center',
         }}
       >
-        {budgetType === 'tracking' ? (
+        {budgetType === 'tracking' && month === monthUtils.currentMonth() ? (
+          <ProjectedEndOfMonthMobile
+            month={month}
+            onPress={onShowBudgetSummary}
+            show3Columns={show3Columns}
+          />
+        ) : budgetType === 'tracking' ? (
           <Saved
             projected={month >= monthUtils.currentMonth()}
             onPress={onShowBudgetSummary}

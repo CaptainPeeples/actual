@@ -25,6 +25,7 @@ import { useUndo } from '#hooks/useUndo';
 import { BudgetMonthMenu } from './BudgetMonthMenu';
 import { ExpenseTotal } from './ExpenseTotal';
 import { IncomeTotal } from './IncomeTotal';
+import { ProjectedEndOfMonth } from './ProjectedEndOfMonth';
 import { Saved } from './Saved';
 
 type BudgetSummaryProps = {
@@ -260,8 +261,17 @@ export function BudgetSummary({ month }: BudgetSummaryProps) {
               borderTop: '1px solid ' + theme.tableBorder,
             }}
           >
-            <Saved projected={month >= currentMonth} />
+            {month === currentMonth ? (
+              <ProjectedEndOfMonth month={month} />
+            ) : (
+              <Saved projected={month >= currentMonth} />
+            )}
           </View>
+        ) : month === currentMonth ? (
+          <ProjectedEndOfMonth
+            month={month}
+            style={{ marginTop: 13, marginBottom: 20 }}
+          />
         ) : (
           <Saved
             projected={month >= currentMonth}

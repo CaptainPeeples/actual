@@ -116,3 +116,18 @@ storybook-static
 .actualrc.yaml
 .actualrc.yml
 actual.config.js
+
+# Peeples branch: never commit Claude or other AI coding tool files.
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+**/CLAUDE.md
+AGENTS.md
+**/AGENTS.md
+.agents/
+.cursor/
+.codex/
+.coderabbit.yaml
+.github/agents/
+.github/hooks/
+scripts/agent-hooks/

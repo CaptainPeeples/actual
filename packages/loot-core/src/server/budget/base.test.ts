@@ -141,6 +141,50 @@ describe('Base budget', () => {
     );
   });
 
+  it('Only counts weekly categories that are over in the group balance', async () => {
+    await sheet.loadSpreadsheet(db);
+    sheet.get().meta().budgetType = 'tracking';
+
+    await db.insertCategoryGroup({ id: 'group1', name: 'Food' });
+    await db.insertCategoryGroup({
+      id: 'group2',
+      name: 'Income',
+      is_income: 1,
+    });
+    const week1 = await db.insertCategory({
+      name: 'Groceries Week 1',
+      cat_group: 'group1',
+    });
+    const week2 = await db.insertCategory({
+      name: 'Groceries Week 2',
+      cat_group: 'group1',
+    });
+    const other = await db.insertCategory({
+      name: 'Other',
+      cat_group: 'group1',
+    });
+
+    await createAllBudgets();
+    const sheetName = monthUtils.sheetForMonth('2017-01');
+    await db.insertAccount({ id: 'account1', name: 'Account 1' });
+
+    const add = (category, amount) =>
+      db.insertTransaction({
+        date: '2017-01-15',
+        amount,
+        account: 'account1',
+        category,
+      });
+    await add(week1, -1000);
+    await add(week2, 500);
+    await add(other, 300);
+    await sheet.waitOnSpreadsheet();
+
+    // Week 2's +500 is spoken for, so only Week 1's -1000 and Other count
+    expect(sheet.getCellValue(sheetName, 'group-leftover-group1')).toBe(-700);
+    expect(sheet.getCellValue(sheetName, `leftover-${week2}`)).toBe(500);
+  });
+
   it('Excludes hidden category groups from budget totals in Tracking Budget', async () => {
     await sheet.loadSpreadsheet(db);
     sheet.get().meta().budgetType = 'tracking';

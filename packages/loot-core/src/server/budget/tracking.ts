@@ -4,6 +4,7 @@ import { resolveName } from '#server/spreadsheet/util';
 // @ts-strict-ignore
 import * as monthUtils from '#shared/months';
 import { safeNumber } from '#shared/util';
+import { parseWeekName } from '#shared/weekly-categories';
 
 import { createCategory as createCategoryFromBase } from './base';
 import { number, sumAmounts } from './util';
@@ -61,6 +62,24 @@ export async function createCategory(cat, sheetName, prevSheetName) {
   });
 
   sheet.get().createStatic(sheetName, `carryover-${cat.id}`, false);
+
+  // Custom branch: what this category adds to its group's balance. A weekly
+  // category ("<Name> Week N") only adds what it is over. Money left in a
+  // week is already spoken for, so it can't hide another week's overspending.
+  // The name is read on each run so a rename is picked up.
+  sheet.get().createDynamic(sheetName, `group-part-${cat.id}`, {
+    initialValue: 0,
+    dependencies: [`leftover-${cat.id}`],
+    run: leftover => {
+      const value = number(leftover);
+      const rows = db.runQuery<{ name: string }>(
+        'SELECT name FROM categories WHERE id = ?',
+        [cat.id],
+        true,
+      );
+      return rows[0] && parseWeekName(rows[0].name) ? Math.min(0, value) : value;
+    },
+  });
 }
 
 export function createCategoryGroup(group, sheetName) {
@@ -83,7 +102,7 @@ export function createCategoryGroup(group, sheetName) {
     initialValue: 0,
     dependencies: group.categories
       .filter(cat => !cat.hidden)
-      .map(cat => `leftover-${cat.id}`),
+      .map(cat => `group-part-${cat.id}`),
     run: sumAmounts,
   });
 }
@@ -157,7 +176,7 @@ export function handleCategoryChange(months, oldValue, newValue) {
     sheet
       .get()
       .addDependencies(sheetName, `group-leftover-${groupId}`, [
-        `leftover-${catId}`,
+        `group-part-${catId}`,
       ]);
   }
 
@@ -175,7 +194,7 @@ export function handleCategoryChange(months, oldValue, newValue) {
     sheet
       .get()
       .removeDependencies(sheetName, `group-leftover-${groupId}`, [
-        `leftover-${catId}`,
+        `group-part-${catId}`,
       ]);
   }
 

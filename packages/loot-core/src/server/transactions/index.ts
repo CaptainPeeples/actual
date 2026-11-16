@@ -9,6 +9,7 @@ import type { PayeeEntity, TransactionEntity } from '#types/models';
 
 import * as rules from './transaction-rules';
 import * as transfer from './transfer';
+import { sortIntoWeeks } from './weekly-categories';
 
 async function idsWithChildren(ids: string[]) {
   const whereIds = whereIn(ids, 'parent_id');
@@ -55,6 +56,9 @@ export async function batchUpdateTransactions({
   const deletedIds = deleted
     ? await idsWithChildren(deleted.map(d => d.id))
     : [];
+
+  // Custom branch: move weekly-category transactions to the week of their date
+  await sortIntoWeeks(added, updated, getTransactionsByIds);
 
   const oldPayees = new Set<PayeeEntity['id']>();
 

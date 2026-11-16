@@ -14,6 +14,7 @@ import { getServer } from '#server/server-config';
 import { batchMessages } from '#server/sync';
 import { batchUpdateTransactions } from '#server/transactions';
 import { runRules } from '#server/transactions/transaction-rules';
+import { sortIntoWeeks } from '#server/transactions/weekly-categories';
 import {
   defaultMappings,
   mappingsFromString,
@@ -1094,6 +1095,8 @@ export async function addTransactions(
     });
     newTransactions = res.added.map(t => t.id);
   } else {
+    // Custom branch: batchUpdateTransactions does this for the other path
+    await sortIntoWeeks(added, undefined, async () => []);
     await batchMessages(async () => {
       newTransactions = await Promise.all(
         added.map(async trans => db.insertTransaction(trans)),

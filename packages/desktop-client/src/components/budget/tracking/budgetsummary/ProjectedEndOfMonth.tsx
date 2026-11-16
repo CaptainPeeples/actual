@@ -11,7 +11,9 @@
 //   - bills still unpaid this month      (per expense category:
 //                                          budgeted - spent, clamped to
 //                                          0..budgeted so refunds and
-//                                          overspending don't skew it)
+//                                          overspending don't skew it;
+//                                          a weekly category whose week is
+//                                          already over counts 0)
 //   - next month's budgeted expenses
 import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -25,6 +27,10 @@ import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { send } from '@actual-app/core/platform/client/connection';
 import * as monthUtils from '@actual-app/core/shared/months';
+import {
+  parseWeekName,
+  weekOfMonth,
+} from '@actual-app/core/shared/weekly-categories';
 import { css } from '@emotion/css';
 
 import { useTrackingSheetValue } from '#components/budget/tracking/TrackingBudgetComponents';
@@ -44,9 +50,24 @@ function cellValue(cells: MonthCells, field: string): number {
   return typeof cell?.value === 'number' ? cell.value : 0;
 }
 
-export function unpaidBills(cells: MonthCells, expenseIds: string[]) {
+// True when `name` is a weekly category ("<Name> Week N") whose week of
+// `month` has already ended as of `today`.
+export function weekIsOver(name: string, month: string, today: string) {
+  const parsed = parseWeekName(name);
+  if (!parsed) return false;
+  const current = monthUtils.monthFromDate(today);
+  if (month !== current) return month < current;
+  return weekOfMonth(today) > parsed.week;
+}
+
+export function unpaidBills(
+  cells: MonthCells,
+  expenseIds: string[],
+  isOver: (id: string) => boolean = () => false,
+) {
   let total = 0;
   for (const id of expenseIds) {
+    if (isOver(id)) continue;
     const budgeted = cellValue(cells, `budget-${id}`);
     const spent = cellValue(cells, `sum-amount-${id}`);
     total += Math.max(0, Math.min(budgeted, budgeted + spent));
@@ -100,6 +121,10 @@ export function useProjectedEndOfMonth(month: string) {
     let cancelled = false;
     const live = categories.list.filter(c => !c.tombstone);
     const expenseIds = live.filter(c => !c.is_income).map(c => c.id);
+    const today = monthUtils.currentDay();
+    const names = new Map(live.map(c => [c.id, c.name]));
+    const isOver = (id: string) =>
+      weekIsOver(names.get(id) ?? '', month, today);
     const incomeIds = live.filter(c => c.is_income).map(c => c.id);
 
     void (async () => {
@@ -114,7 +139,7 @@ export function useProjectedEndOfMonth(month: string) {
       setParts({
         balance: (balanceResult.data as number) || 0,
         incomeLeft: incomeStillComing(thisMonth || [], incomeIds),
-        unpaid: unpaidBills(thisMonth || [], expenseIds),
+        unpaid: unpaidBills(thisMonth || [], expenseIds, isOver),
         nextMonth: cellValue(nextMonth || [], 'total-budgeted'),
       });
     })();

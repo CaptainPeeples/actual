@@ -106,6 +106,18 @@ function isCacheDirty(mainDb: Database, cacheDb: Database): boolean {
   // Always also check if there is anything in `kvcache`. We ask for one item;
   // if we didn't get back anything it's empty so there is no cache
   rows = sqlite.runQuery(cacheDb, 'SELECT * FROM kvcache LIMIT 1', [], true);
+  if (rows.length === 0) {
+    return true;
+  }
+
+  // Custom branch: a cache saved before group balances used the
+  // `group-part-*` cells holds old group totals, so rebuild it.
+  rows = sqlite.runQuery(
+    cacheDb,
+    "SELECT key FROM kvcache WHERE key LIKE '%!group-part-%' LIMIT 1",
+    [],
+    true,
+  );
   return rows.length === 0;
 }
 

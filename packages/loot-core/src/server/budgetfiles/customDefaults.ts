@@ -4,6 +4,9 @@
 // This branch instead starts every new budget in tracking mode with a full,
 // generic category layout. No amounts are set. Existing budgets are never
 // touched: this only runs from createBudget().
+//
+// Food and gas start as weekly categories ("Week 1" ... "Week 4"), so
+// spending is sorted into the week it happened (see #shared/weekly-categories).
 import * as db from '#server/db';
 import { batchMessages } from '#server/sync';
 
@@ -31,14 +34,17 @@ export const DEFAULT_EXPENSE_GROUPS: ReadonlyArray<{
     categories: [
       'Auto Payment',
       'Auto Insurance',
-      'Gas',
+      'Gas Week 1',
+      'Gas Week 2',
+      'Gas Week 3',
+      'Gas Week 4',
       'Car Maintenance',
       'Parking & Tolls',
     ],
   },
   {
-    name: 'Food & Dining',
-    categories: ['Groceries', 'Restaurants', 'Coffee Shops'],
+    name: 'Food, Dining & Coffee',
+    categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
   },
   { name: 'Subscriptions', categories: ['Subscriptions'] },
   {

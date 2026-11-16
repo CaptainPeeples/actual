@@ -46,12 +46,12 @@ are paid and next month's bills are set aside?_
 
 How each line is figured:
 
-| Line                | How it's calculated                                                                                                                                                                                                    |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Account balance     | Total of all open, on-budget accounts.                                                                                                                                                                                 |
-| Income still coming | For **each income category**: budgeted − received, never below 0. One category coming in over budget (or a negative line) can't cancel out paychecks you're still waiting on.                                          |
-| Bills not paid yet  | For **each expense category**: budgeted − spent, kept between 0 and the budgeted amount. A category that's paid, or overspent, counts as 0. Refunds can't make a category look like it owes more than it was budgeted. |
-| Next month's bills  | Total budgeted expenses for next month.                                                                                                                                                                                |
+| Line                | How it's calculated                                                                                                                                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Account balance     | Total of all open, on-budget accounts.                                                                                                                                                                                                                                                           |
+| Income still coming | For **each income category**: budgeted − received, never below 0. One category coming in over budget (or a negative line) can't cancel out paychecks you're still waiting on.                                                                                                                    |
+| Bills not paid yet  | For **each expense category**: budgeted − spent, kept between 0 and the budgeted amount. A category that's paid, or overspent, counts as 0. Refunds can't make a category look like it owes more than it was budgeted. A weekly category whose week is already over counts as 0 (see section 7). |
+| Next month's bills  | Total budgeted expenses for next month.                                                                                                                                                                                                                                                          |
 
 Hover over the number to see the breakdown. Past and future months still show
 stock Actual's "Projected savings" / "Saved". The phone layout shows it too, in
@@ -72,9 +72,11 @@ Code: `packages/desktop-client/src/hooks/useFormulaExecution.ts`
 A **brand-new** budget file starts in **tracking** mode with a full, generic
 category layout (no amounts):
 
-- **Expense groups:** Housing, Bills & Utilities, Auto & Transport, Food &
-  Dining, Subscriptions, Health & Wellness, Education, Debt, Savings, Travel &
-  Lifestyle, Other Expenses
+- **Expense groups:** Housing, Bills & Utilities, Auto & Transport, Food,
+  Dining & Coffee, Subscriptions, Health & Wellness, Education, Debt, Savings,
+  Travel & Lifestyle, Other Expenses
+- **Weekly categories:** Food, Dining & Coffee is split into Week 1 … Week 4,
+  and Auto & Transport has Gas Week 1 … Gas Week 4 (see section 7)
 - **Income:** Income 1, Income 2, Bonus Income, Other Income, Interest, Refunds,
   Starting Balances
 
@@ -88,6 +90,59 @@ Existing budgets are never changed. Edit the list in
   remembers the ones you open.
 
 Code: `packages/desktop-client/src/components/mobile/budget/`
+
+### 7. Weekly categories
+
+Split a spending category into weeks so you can see each week on its own.
+
+**Set it up:** in one group, make 4 categories that end in `Week 1` to
+`Week 4`. Either form works:
+
+- `Week 1`, `Week 2`, `Week 3`, `Week 4` (the whole group is one weekly set)
+- `Gas Week 1` … `Gas Week 4` (the name before "Week" makes its own set, so
+  one group can hold more than one set)
+
+Give each week its budget (for example, the monthly amount ÷ 4).
+
+**The weeks:**
+
+| Week   | Days of the month |
+| ------ | ----------------- |
+| Week 1 | 1–7               |
+| Week 2 | 8–14              |
+| Week 3 | 15–21             |
+| Week 4 | 22–end            |
+
+**What it does:**
+
+- **Sorts by date.** Put a transaction in _any_ week of a set and it moves to
+  the week that matches its date. This works for typing, editing, rules, and
+  bank sync. So a rule can just say "Week 1" and the date picks the right
+  week.
+- **Group balance shows what you're really over.** A week with money left
+  adds 0 to its group's balance. Only weeks that went over count. Money left
+  in this week or a later week is already spoken for, so it can't hide
+  overspending in an earlier week. Each week's own row still shows its real
+  balance.
+
+  ```
+  group balance = budgeted − spent − money still left in weeks with money left
+  ```
+
+  Example: 4 weeks budgeted at 100 each. Week 1 spent 150, Week 2 spent 120,
+  Week 3 spent 40 so far, Week 4 nothing yet. Stock Actual shows the group at
+  +90. This branch shows **−70** (Week 1 is 50 over, Week 2 is 20 over).
+
+- **Projected end of month** skips a week that is already over, since that
+  money can't be spent anymore. Weeks still to come count as bills not paid
+  yet.
+
+Other categories work as usual. Renaming a category to or from `Week N` turns
+it on or off.
+
+Code: `packages/loot-core/src/shared/weekly-categories.ts`,
+`packages/loot-core/src/server/transactions/weekly-categories.ts`,
+`packages/loot-core/src/server/budget/tracking.ts` (`group-part-*` cells)
 
 ## Docker image
 

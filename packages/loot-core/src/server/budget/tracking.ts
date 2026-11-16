@@ -77,7 +77,9 @@ export async function createCategory(cat, sheetName, prevSheetName) {
         [cat.id],
         true,
       );
-      return rows[0] && parseWeekName(rows[0].name) ? Math.min(0, value) : value;
+      return rows[0] && parseWeekName(rows[0].name)
+        ? Math.min(0, value)
+        : value;
     },
   });
 }

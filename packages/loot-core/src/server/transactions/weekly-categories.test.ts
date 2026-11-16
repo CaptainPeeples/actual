@@ -51,7 +51,7 @@ describe('weekly categories', () => {
       week: 3,
     });
     expect(parseWeekName('Food & Dining')).toBeNull();
-    expect(parseWeekName('Week 2')).toBeNull();
+    expect(parseWeekName('Week 2')).toEqual({ prefix: '', week: 2 });
     expect(parseWeekName('Gas Week 5')).toBeNull();
   });
 

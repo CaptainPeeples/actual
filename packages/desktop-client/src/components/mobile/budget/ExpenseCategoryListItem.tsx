@@ -15,6 +15,7 @@ import * as monthUtils from '@actual-app/core/shared/months';
 import type { IntegerAmount } from '@actual-app/core/shared/util';
 import type { CategoryEntity } from '@actual-app/core/types/models';
 
+import { useBillStatus } from '#components/budget/paidBills';
 import { useCategoriesById } from '#hooks/useCategories';
 import { useFormat } from '#hooks/useFormat';
 import { useNavigate } from '#hooks/useNavigate';
@@ -32,12 +33,14 @@ import { SpentCell } from './SpentCell';
 
 type ExpenseCategoryNameProps = {
   category: CategoryEntity;
+  month: string;
   onEditCategory: (id: CategoryEntity['id']) => void;
   show3Columns: boolean;
 };
 
 function ExpenseCategoryName({
   category,
+  month,
   onEditCategory,
   show3Columns,
 }: ExpenseCategoryNameProps) {
@@ -45,6 +48,7 @@ function ExpenseCategoryName({
     show3Columns,
     isSidebar: true,
   });
+  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
 
   return (
     <View
@@ -89,6 +93,7 @@ function ExpenseCategoryName({
             data-testid="category-name"
           >
             {category.name}
+            {billPaid && ' ✓'}
           </Text>
           <SvgCheveronRight
             style={{ flexShrink: 0, color: theme.tableTextSubdued }}
@@ -471,6 +476,7 @@ export function ExpenseCategoryListItem({
       >
         <ExpenseCategoryName
           category={category}
+          month={month}
           onEditCategory={onEditCategory}
           show3Columns={show3Columns}
         />

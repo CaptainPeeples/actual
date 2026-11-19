@@ -1,4 +1,4 @@
-import { paidBillCategories } from './ProjectedEndOfMonth';
+import { billStatus, groupBillsPaid, paidBillCategories } from './paidBills';
 
 const month = '2026-11';
 
@@ -128,5 +128,32 @@ describe('paidBillCategories', () => {
       month,
     );
     expect(paid.has('mortgage')).toBe(true);
+  });
+});
+
+describe('groupBillsPaid', () => {
+  const status = billStatus(
+    [
+      { date: '2026-11-09', category: 'mortgage', payee: 'cc', schedule: 'm' },
+      { date: '2026-11-12', category: 'water', payee: 'iw', schedule: null },
+      { date: '2026-11-03', category: 'hoa', payee: 'hoa', schedule: null },
+    ],
+    [
+      { id: 'm', next_date: '2026-11-07', _payee: 'cc' },
+      { id: 'w', next_date: '2026-11-12', _payee: 'iw' },
+    ],
+    '2026-11',
+  );
+
+  it('knows which categories have bills', () => {
+    expect([...status.hasBills].sort()).toEqual(['mortgage', 'water']);
+    expect([...status.paid]).toEqual(['mortgage']);
+  });
+
+  it('needs every bill in the group paid', () => {
+    expect(groupBillsPaid(status, ['mortgage', 'hoa'])).toBe(true);
+    expect(groupBillsPaid(status, ['mortgage', 'water'])).toBe(false);
+    expect(groupBillsPaid(status, ['hoa'])).toBe(false);
+    expect(groupBillsPaid(null, ['mortgage'])).toBe(false);
   });
 });

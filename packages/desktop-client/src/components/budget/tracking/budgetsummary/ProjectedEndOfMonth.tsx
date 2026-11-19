@@ -29,20 +29,19 @@ import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { send } from '@actual-app/core/platform/client/connection';
 import * as monthUtils from '@actual-app/core/shared/months';
-import { q } from '@actual-app/core/shared/query';
 import {
   parseWeekName,
   weekOfMonth,
 } from '@actual-app/core/shared/weekly-categories';
 import { css } from '@emotion/css';
 
+import { paidBillCategories, useBillData } from '#components/budget/paidBills';
 import { useTrackingSheetValue } from '#components/budget/tracking/TrackingBudgetComponents';
 import { makeAmountFullStyle } from '#components/budget/util';
 import { FinancialText } from '#components/FinancialText';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { useCategories } from '#hooks/useCategories';
 import { useFormat } from '#hooks/useFormat';
-import { useQuery } from '#hooks/useQuery';
 import { useSheetValue } from '#hooks/useSheetValue';
 import { aqlQuery } from '#queries/aqlQuery';
 import { onBudgetAccountBalance, trackingBudget } from '#spreadsheet/bindings';
@@ -62,73 +61,6 @@ export function weekIsOver(name: string, month: string, today: string) {
   const current = monthUtils.monthFromDate(today);
   if (month !== current) return month < current;
   return weekOfMonth(today) > parsed.week;
-}
-
-type LinkedTransaction = {
-  date: string;
-  category: string | null;
-  payee: string | null;
-  schedule: string | null;
-};
-
-type OpenSchedule = {
-  id: string;
-  next_date: string | null;
-  _payee: string | null;
-};
-
-// A category's bill is paid for `month` once every schedule that belongs to
-// it has a transaction linked to it this month (in any category, since one
-// payee can bill more than one category). A schedule belongs to a
-// category when it was linked to a transaction in that category, or its
-// payee shows up there, in `transactions` (this month and a few before).
-// Paying a bill for less than budgeted then frees up what's left, the same
-// as checking it off on a paper budget.
-export function paidBillCategories(
-  transactions: LinkedTransaction[],
-  schedules: OpenSchedule[],
-  month: string,
-): Set<string> {
-  const monthEnd = monthUtils.lastDayOfMonth(month);
-  const linkedThisMonth = new Map<string, Set<string>>();
-  const paidThisMonth = new Set<string>();
-  const belongs = new Map<string, Set<string>>();
-  const byPayee = new Map<string, string[]>();
-  for (const s of schedules) {
-    if (!s._payee) continue;
-    byPayee.set(s._payee, [...(byPayee.get(s._payee) ?? []), s.id]);
-  }
-  const add = (map: Map<string, Set<string>>, key: string, id: string) => {
-    const set = map.get(key) ?? new Set<string>();
-    set.add(id);
-    map.set(key, set);
-  };
-  for (const t of transactions) {
-    if (!t.category) continue;
-    if (t.schedule) {
-      add(belongs, t.category, t.schedule);
-      if (monthUtils.monthFromDate(t.date) === month) {
-        add(linkedThisMonth, t.category, t.schedule);
-        paidThisMonth.add(t.schedule);
-      }
-    }
-    for (const id of (t.payee && byPayee.get(t.payee)) || []) {
-      add(belongs, t.category, id);
-    }
-  }
-  const dueByMonthEnd = new Set(
-    schedules
-      .filter(s => s.next_date && s.next_date <= monthEnd)
-      .map(s => s.id),
-  );
-  const paid = new Set<string>();
-  for (const category of linkedThisMonth.keys()) {
-    const owed = [...(belongs.get(category) ?? [])].filter(
-      id => dueByMonthEnd.has(id) && !paidThisMonth.has(id),
-    );
-    if (owed.length === 0) paid.add(category);
-  }
-  return paid;
 }
 
 export function unpaidBills(
@@ -185,25 +117,9 @@ export function useProjectedEndOfMonth(month: string) {
       `${nextSheet}!total-budgeted` as 'total-budgeted',
     ) || 0;
 
-  // Live, so linking a bill to its schedule updates the projection at once.
-  const { data: linked } = useQuery<LinkedTransaction>(
-    () =>
-      q('transactions')
-        .filter({
-          date: {
-            $gte: monthUtils.firstDayOfMonth(monthUtils.subMonths(month, 3)),
-            $lte: monthUtils.lastDayOfMonth(month),
-          },
-        })
-        .select(['date', 'category', 'payee', 'schedule']),
-    [month],
-  );
-  const { data: openSchedules } = useQuery<OpenSchedule>(
-    () =>
-      q('schedules')
-        .filter({ completed: false })
-        .select(['id', 'next_date', '_payee']),
-    [],
+  const { transactions: linked, schedules: openSchedules } = useBillData(
+    month,
+    month,
   );
 
   const [parts, setParts] = useState<Parts | null>(null);

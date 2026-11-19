@@ -19,6 +19,7 @@ import type {
 import { css } from '@emotion/css';
 import { AutoTextSize } from 'auto-text-size';
 
+import { groupBillsPaid, useBillStatus } from '#components/budget/paidBills';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CellValue } from '#components/spreadsheet/CellValue';
 import { useFormat } from '#hooks/useFormat';
@@ -155,6 +156,7 @@ export function ExpenseGroupHeader({
     >
       <ExpenseGroupName
         group={categoryGroup}
+        month={month}
         onEditCategoryGroup={onEditCategoryGroup}
         isCollapsed={isCollapsed}
         onToggleCollapse={onToggleCollapse}
@@ -171,6 +173,7 @@ export function ExpenseGroupHeader({
 
 type ExpenseGroupNameProps = {
   group: CategoryGroupEntity;
+  month: string;
   onEditCategoryGroup: (id: CategoryGroupEntity['id']) => void;
   isCollapsed: (id: CategoryGroupEntity['id']) => boolean;
   onToggleCollapse: (id: CategoryGroupEntity['id']) => void;
@@ -179,6 +182,7 @@ type ExpenseGroupNameProps = {
 
 function ExpenseGroupName({
   group,
+  month,
   onEditCategoryGroup,
   isCollapsed,
   onToggleCollapse,
@@ -189,6 +193,10 @@ function ExpenseGroupName({
     isSidebar: true,
     offset: -3.5,
   });
+  const groupPaid = groupBillsPaid(
+    useBillStatus(month),
+    (group.categories ?? []).map(c => c.id),
+  );
   return (
     <View
       style={{
@@ -256,6 +264,7 @@ function ExpenseGroupName({
             data-testid="category-group-name"
           >
             {group.name}
+            {groupPaid && ' ✓'}
           </Text>
           <SvgCheveronRight
             style={{ flexShrink: 0, color: theme.tableTextSubdued }}

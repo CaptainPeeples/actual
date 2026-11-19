@@ -43,6 +43,7 @@ import {
   useSortCategoriesMutation,
 } from '#budget';
 import { closeBudget } from '#budgetfiles/budgetfilesSlice';
+import { PaidBillsProvider } from '#components/budget/paidBills';
 import { prewarmMonth } from '#components/budget/util';
 import { FinancialText } from '#components/FinancialText';
 import { MobilePageHeader, Page } from '#components/Page';
@@ -581,18 +582,20 @@ export function BudgetPage() {
           {({ onRefresh }) => (
             <>
               <Banners month={startMonth} onBudgetAction={onBudgetAction} />
-              <BudgetTable
-                // This key forces the whole table rerender when the number
-                // format changes
-                key={`${numberFormat}${hideFraction}`}
-                categoryGroups={categoryGroups}
-                month={startMonth}
-                onShowBudgetSummary={onShowBudgetSummary}
-                onBudgetAction={onBudgetAction}
-                onRefresh={onRefresh}
-                onEditCategoryGroup={onOpenCategoryGroupMenuModal}
-                onEditCategory={onOpenCategoryMenuModal}
-              />
+              <PaidBillsProvider months={[startMonth]}>
+                <BudgetTable
+                  // This key forces the whole table rerender when the number
+                  // format changes
+                  key={`${numberFormat}${hideFraction}`}
+                  categoryGroups={categoryGroups}
+                  month={startMonth}
+                  onShowBudgetSummary={onShowBudgetSummary}
+                  onBudgetAction={onBudgetAction}
+                  onRefresh={onRefresh}
+                  onEditCategoryGroup={onOpenCategoryGroupMenuModal}
+                  onEditCategory={onOpenCategoryMenuModal}
+                />
+              </PaidBillsProvider>
             </>
           )}
         </SyncRefresh>

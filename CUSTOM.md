@@ -67,7 +67,8 @@ Hover over the number to see the breakdown. Past and future months still show
 stock Actual's "Projected savings" / "Saved". The phone layout shows it too, in
 the top-left of the budget page.
 
-Code: `packages/desktop-client/src/components/budget/tracking/budgetsummary/ProjectedEndOfMonth.tsx`
+Code: `packages/desktop-client/src/components/budget/tracking/budgetsummary/ProjectedEndOfMonth.tsx`,
+`packages/desktop-client/src/components/budget/paidBills.tsx`
 
 ### 4. Report cards can read tracking budgets
 
@@ -172,6 +173,17 @@ only for display.
 
 Code: `makeCreditStyle` and `withCreditSign` in
 `packages/desktop-client/src/components/budget/util.ts`
+
+### 9. ✓ on paid bills
+
+On the budget page, a bill category gets a **✓** once its bills are paid for
+that month (the same rule as "Paid bills free up their leftover" in section
+3). A group gets a ✓ once every bill category in it is paid. Categories
+without bills don't affect the group's ✓. On the computer the ✓ is in the
+Spent column; on the phone it's after the name. The ✓ uses the normal text
+color.
+
+Code: `packages/desktop-client/src/components/budget/paidBills.tsx`
 
 ## Docker image
 

@@ -46,12 +46,22 @@ are paid and next month's bills are set aside?_
 
 How each line is figured:
 
-| Line                | How it's calculated                                                                                                                                                                                                                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Account balance     | Total of all open, on-budget accounts.                                                                                                                                                                                                                                                           |
-| Income still coming | For **each income category**: budgeted − received, never below 0. One category coming in over budget (or a negative line) can't cancel out paychecks you're still waiting on.                                                                                                                    |
-| Bills not paid yet  | For **each expense category**: budgeted − spent, kept between 0 and the budgeted amount. A category that's paid, or overspent, counts as 0. Refunds can't make a category look like it owes more than it was budgeted. A weekly category whose week is already over counts as 0 (see section 7). |
-| Next month's bills  | Total budgeted expenses for next month.                                                                                                                                                                                                                                                          |
+| Line                | How it's calculated                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Account balance     | Total of all open, on-budget accounts.                                                                                                                                                                                                                                                                                                                                 |
+| Income still coming | For **each income category**: budgeted − received, never below 0. One category coming in over budget (or a negative line) can't cancel out paychecks you're still waiting on.                                                                                                                                                                                          |
+| Bills not paid yet  | For **each expense category**: budgeted − spent, kept between 0 and the budgeted amount. A category that's paid, or overspent, counts as 0. Refunds can't make a category look like it owes more than it was budgeted. A weekly category whose week is already over counts as 0 (see section 7). A bill category whose schedules are all paid counts as 0 (see below). |
+| Next month's bills  | Total budgeted expenses for next month.                                                                                                                                                                                                                                                                                                                                |
+
+**Paid bills free up their leftover.** If a bill comes in under budget (say
+water is budgeted at 150 and the bill is 100), the 50 left over counts as
+money you keep, as soon as the bill is paid. A category counts as paid once
+every schedule that belongs to it has a transaction linked to it this month.
+A schedule belongs to a category when it was linked to a transaction there, or
+its payee shows up there, in the last 3 months. If a bill is far off its usual
+amount and the schedule doesn't match it, open the schedule and link the
+transaction by hand. Categories with no schedules (groceries, gas) work the
+same as before. The category's own Balance column still shows the leftover.
 
 Hover over the number to see the breakdown. Past and future months still show
 stock Actual's "Projected savings" / "Saved". The phone layout shows it too, in

@@ -19,7 +19,6 @@ import type {
 import { css } from '@emotion/css';
 import { AutoTextSize } from 'auto-text-size';
 
-import { makeCreditStyle, withCreditSign } from '#components/budget/util';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CellValue } from '#components/spreadsheet/CellValue';
 import { useFormat } from '#hooks/useFormat';
@@ -363,9 +362,9 @@ function ExpenseGroupCells({
                   minFontSizePx={6}
                   maxFontSizePx={12}
                   mode="oneline"
-                  style={{ ...amountStyle, ...makeCreditStyle(value) }}
+                  style={amountStyle}
                 >
-                  {withCreditSign(value, format(value, type))}
+                  {format(value, type)}
                 </AutoTextSize>
               </PrivacyFilter>
             </View>

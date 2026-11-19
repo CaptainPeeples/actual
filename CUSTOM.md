@@ -148,15 +148,13 @@ Code: `packages/loot-core/src/shared/weekly-categories.ts`,
 `packages/loot-core/src/server/transactions/weekly-categories.ts`,
 `packages/loot-core/src/server/budget/tracking.ts` (`group-part-*` cells)
 
-### 8. Green "+" for money in
+### 8. Green "+" for money in (transactions)
 
-Any amount that is money coming in (income, refunds, credits) shows in green
-with a `+` in front, like `+27.57`. That covers:
-
-- **Transaction lists** on the computer (the Deposit column) and the phone, in
-  every account and every category's transaction list.
-- **Budget page** Spent and Received numbers above zero, for categories and
-  groups, in tracking and envelope budgets, on the computer and the phone.
+In transaction lists, any amount that is money coming in (income, refunds,
+credits) shows in green with a `+` in front, like `+27.57`. That covers the
+Deposit column on the computer and the amount on the phone, in every account
+and every category's transaction list. The budget page is not changed: its
+numbers stay the stock color (plus the red negative balances above).
 
 This uses the new theme color `amountCredit` (the theme's normal green), set
 in all three themes. Typing an amount works the same as before; the `+` is

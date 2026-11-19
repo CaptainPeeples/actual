@@ -25,7 +25,7 @@ Actual is a free, open-source, local-first budgeting app. This version adds:
 - 📅 **Projected end of month** box for tracking budgets
 - 🗓️ **Weekly categories**: "Week 1 (1st-7th)" to "Week 4 (22nd-End)" categories
   sort spending by date, and the group total shows only the weeks that went over
-- 💚 **Green "+" for money in**: income, refunds, and credits show in green with a "+"
+- 💚 **Green "+" for money in**: income, refunds, and credits show in green with a "+" in transaction lists
 - 📊 Report cards that read **tracking budget** data
 - 🆕 New budgets start in **tracking mode** with a generic category list (no amounts),
   with weekly categories for food and gas

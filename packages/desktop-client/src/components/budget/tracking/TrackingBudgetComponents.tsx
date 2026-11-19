@@ -20,11 +20,7 @@ import { t } from 'i18next';
 
 import { BalanceWithCarryover } from '#components/budget/BalanceWithCarryover';
 import { GoalStatus } from '#components/budget/GoalStatus';
-import {
-  makeAmountGrey,
-  makeCreditStyle,
-  withCreditSign,
-} from '#components/budget/util';
+import { makeAmountGrey } from '#components/budget/util';
 import { NotesButton } from '#components/NotesButton';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
 import { Field, SheetCell } from '#components/table';
@@ -145,7 +141,6 @@ export const GroupMonth = memo(function GroupMonth({
   group,
 }: CategoryGroupMonthProps) {
   const { id } = group;
-  const format = useFormat();
 
   return (
     <View
@@ -172,11 +167,9 @@ export const GroupMonth = memo(function GroupMonth({
         width="flex"
         textAlign="right"
         style={{ fontWeight: 600, ...styles.tnum }}
-        formatter={value => withCreditSign(value, format(value, 'financial'))}
         valueProps={{
           binding: trackingBudget.groupSumAmount(id),
           type: 'financial',
-          getValueStyle: makeCreditStyle,
         }}
       />
       {!group.is_income && (
@@ -462,11 +455,7 @@ export const CategoryMonth = memo(function CategoryMonth({
                     textDecoration: 'underline',
                   },
                   ...makeAmountGrey(props.value),
-                  ...makeCreditStyle(props.value),
                 })}
-                formatter={(value, type) =>
-                  withCreditSign(value, format(value, type))
-                }
               />
             )}
           </TrackingCellValue>

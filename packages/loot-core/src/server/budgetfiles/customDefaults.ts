@@ -5,7 +5,8 @@
 // generic category layout. No amounts are set. Existing budgets are never
 // touched: this only runs from createBudget().
 //
-// Food and gas start as weekly categories ("Week 1" ... "Week 4"), so
+// Food and gas start as weekly categories ("Week 1 (1st-7th)" ...
+// "Week 4 (22nd-End)"), so
 // spending is sorted into the week it happened (see #shared/weekly-categories).
 import * as db from '#server/db';
 import { batchMessages } from '#server/sync';
@@ -34,17 +35,22 @@ export const DEFAULT_EXPENSE_GROUPS: ReadonlyArray<{
     categories: [
       'Auto Payment',
       'Auto Insurance',
-      'Gas Week 1',
-      'Gas Week 2',
-      'Gas Week 3',
-      'Gas Week 4',
+      'Gas Week 1 (1st-7th)',
+      'Gas Week 2 (8th-14th)',
+      'Gas Week 3 (15th-21st)',
+      'Gas Week 4 (22nd-End)',
       'Car Maintenance',
       'Parking & Tolls',
     ],
   },
   {
     name: 'Food, Dining & Coffee',
-    categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    categories: [
+      'Week 1 (1st-7th)',
+      'Week 2 (8th-14th)',
+      'Week 3 (15th-21st)',
+      'Week 4 (22nd-End)',
+    ],
   },
   { name: 'Subscriptions', categories: ['Subscriptions'] },
   {

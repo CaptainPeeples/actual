@@ -75,8 +75,9 @@ category layout (no amounts):
 - **Expense groups:** Housing, Bills & Utilities, Auto & Transport, Food,
   Dining & Coffee, Subscriptions, Health & Wellness, Education, Debt, Savings,
   Travel & Lifestyle, Other Expenses
-- **Weekly categories:** Food, Dining & Coffee is split into Week 1 … Week 4,
-  and Auto & Transport has Gas Week 1 … Gas Week 4 (see section 7)
+- **Weekly categories:** Food, Dining & Coffee is split into Week 1 (1st-7th)
+  … Week 4 (22nd-End), and Auto & Transport has Gas Week 1 (1st-7th) … Gas
+  Week 4 (22nd-End) (see section 7)
 - **Income:** Income 1, Income 2, Bonus Income, Other Income, Interest, Refunds,
   Starting Balances
 
@@ -101,6 +102,9 @@ Split a spending category into weeks so you can see each week on its own.
 - `Week 1`, `Week 2`, `Week 3`, `Week 4` (the whole group is one weekly set)
 - `Gas Week 1` … `Gas Week 4` (the name before "Week" makes its own set, so
   one group can hold more than one set)
+
+A note in parentheses can go at the end, like `Week 1 (1st-7th)`. New budgets
+start with the day ranges in the names.
 
 Give each week its budget (for example, the monthly amount ÷ 4).
 

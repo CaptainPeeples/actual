@@ -95,6 +95,22 @@ describe('paidBillCategories', () => {
     expect(paid.has('subs')).toBe(false);
   });
 
+  it('counts a shared-payee bill paid in another category', () => {
+    const paid = paidBillCategories(
+      [
+        { date: '2026-11-14', category: 'auto', payee: 'geico', schedule: 'a' },
+        { date: '2026-11-18', category: 'boat', payee: 'geico', schedule: 'b' },
+      ],
+      [
+        { id: 'a', next_date: '2026-11-12', _payee: 'geico' },
+        { id: 'b', next_date: '2026-11-15', _payee: 'geico' },
+      ],
+      month,
+    );
+    expect(paid.has('auto')).toBe(true);
+    expect(paid.has('boat')).toBe(true);
+  });
+
   it('ignores bills not due until next month', () => {
     const paid = paidBillCategories(
       [

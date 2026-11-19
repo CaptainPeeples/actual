@@ -78,7 +78,8 @@ type OpenSchedule = {
 };
 
 // A category's bill is paid for `month` once every schedule that belongs to
-// it has a transaction linked to it this month. A schedule belongs to a
+// it has a transaction linked to it this month (in any category, since one
+// payee can bill more than one category). A schedule belongs to a
 // category when it was linked to a transaction in that category, or its
 // payee shows up there, in `transactions` (this month and a few before).
 // Paying a bill for less than budgeted then frees up what's left, the same
@@ -90,6 +91,7 @@ export function paidBillCategories(
 ): Set<string> {
   const monthEnd = monthUtils.lastDayOfMonth(month);
   const linkedThisMonth = new Map<string, Set<string>>();
+  const paidThisMonth = new Set<string>();
   const belongs = new Map<string, Set<string>>();
   const byPayee = new Map<string, string[]>();
   for (const s of schedules) {
@@ -107,6 +109,7 @@ export function paidBillCategories(
       add(belongs, t.category, t.schedule);
       if (monthUtils.monthFromDate(t.date) === month) {
         add(linkedThisMonth, t.category, t.schedule);
+        paidThisMonth.add(t.schedule);
       }
     }
     for (const id of (t.payee && byPayee.get(t.payee)) || []) {
@@ -119,9 +122,9 @@ export function paidBillCategories(
       .map(s => s.id),
   );
   const paid = new Set<string>();
-  for (const [category, linked] of linkedThisMonth) {
+  for (const category of linkedThisMonth.keys()) {
     const owed = [...(belongs.get(category) ?? [])].filter(
-      id => dueByMonthEnd.has(id) && !linked.has(id),
+      id => dueByMonthEnd.has(id) && !paidThisMonth.has(id),
     );
     if (owed.length === 0) paid.add(category);
   }

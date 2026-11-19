@@ -17,7 +17,11 @@ import * as monthUtils from '@actual-app/core/shared/months';
 import { css } from '@emotion/css';
 
 import { BalanceWithCarryover } from '#components/budget/BalanceWithCarryover';
-import { makeAmountGrey } from '#components/budget/util';
+import {
+  makeAmountGrey,
+  makeCreditStyle,
+  withCreditSign,
+} from '#components/budget/util';
 import { NotesButton } from '#components/NotesButton';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
 import { Field, Row, SheetCell } from '#components/table';
@@ -143,6 +147,7 @@ export const ExpenseGroupMonth = memo(function ExpenseGroupMonth({
   group,
 }: CategoryGroupMonthProps) {
   const { id } = group;
+  const format = useFormat();
 
   return (
     <View
@@ -169,9 +174,11 @@ export const ExpenseGroupMonth = memo(function ExpenseGroupMonth({
         width="flex"
         textAlign="right"
         style={{ fontWeight: 600, ...styles.tnum }}
+        formatter={value => withCreditSign(value, format(value, 'financial'))}
         valueProps={{
           binding: envelopeBudget.groupSumAmount(id),
           type: 'financial',
+          getValueStyle: makeCreditStyle,
         }}
       />
       <EnvelopeSheetCell
@@ -483,7 +490,11 @@ export const ExpenseCategoryMonth = memo(function ExpenseCategoryMonth({
                   cursor: 'pointer',
                   ':hover': { textDecoration: 'underline' },
                   ...makeAmountGrey(props.value),
+                  ...makeCreditStyle(props.value),
                 })}
+                formatter={(value, type) =>
+                  withCreditSign(value, format(value, type))
+                }
               />
             )}
           </EnvelopeCellValue>

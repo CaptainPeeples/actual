@@ -16,6 +16,7 @@ import type { CategoryGroupEntity } from '@actual-app/core/types/models';
 import { css } from '@emotion/css';
 import { AutoTextSize } from 'auto-text-size';
 
+import { makeCreditStyle, withCreditSign } from '#components/budget/util';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CellValue } from '#components/spreadsheet/CellValue';
 import { useFormat } from '#hooks/useFormat';
@@ -315,9 +316,10 @@ function IncomeGroupCells({ group }: IncomeGroupCellsProps) {
                   textAlign: 'right',
                   fontSize: 12,
                   fontWeight: '500',
+                  ...makeCreditStyle(value),
                 }}
               >
-                {format(value, type)}
+                {withCreditSign(value, format(value, type))}
               </AutoTextSize>
             </PrivacyFilter>
           </View>

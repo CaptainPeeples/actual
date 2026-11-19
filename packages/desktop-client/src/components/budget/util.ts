@@ -62,6 +62,17 @@ export function separateGroups(categoryGroups: CategoryGroupEntity[]) {
   ] as const;
 }
 
+// Custom branch: a credit (money in) shows in green with a "+" in front.
+export function makeCreditStyle(value: unknown): CSSProperties {
+  return typeof value === 'number' && value > 0
+    ? { color: theme.amountCredit }
+    : {};
+}
+
+export function withCreditSign(value: unknown, formatted: string): string {
+  return typeof value === 'number' && value > 0 ? '+' + formatted : formatted;
+}
+
 export function makeAmountGrey(value: number | string | null): CSSProperties {
   return value === 0 || value === '0' || value === '' || value == null
     ? { color: theme.budgetNumberZero }

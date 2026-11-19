@@ -12,6 +12,7 @@ import { css, cx } from '@emotion/css';
 import { AutoTextSize } from 'auto-text-size';
 
 import { BalanceWithCarryover } from '#components/budget/BalanceWithCarryover';
+import { makeCreditStyle, withCreditSign } from '#components/budget/util';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { useFormat } from '#hooks/useFormat';
 import { useSyncedPref } from '#hooks/useSyncedPref';
@@ -29,6 +30,8 @@ type BalanceCellProps = {
   show3Columns?: boolean;
   onPress?: () => void;
   'aria-label'?: string;
+  // Custom branch: show money in (income) green with a "+"
+  showCredit?: boolean;
 };
 
 export function BalanceCell({
@@ -37,6 +40,7 @@ export function BalanceCell({
   show3Columns,
   onPress,
   'aria-label': ariaLabel,
+  showCredit,
 }: BalanceCellProps) {
   const { t } = useTranslation();
   const [budgetType = 'envelope'] = useSyncedPref('budgetType');
@@ -103,10 +107,13 @@ export function BalanceCell({
                   maxWidth: columnWidth,
                   textAlign: 'right',
                   fontSize: 12,
+                  ...(showCredit && makeCreditStyle(value)),
                 }),
               )}
             >
-              {format(value, type)}
+              {showCredit
+                ? withCreditSign(value, format(value, type))
+                : format(value, type)}
             </AutoTextSize>
           </PrivacyFilter>
         </Button>

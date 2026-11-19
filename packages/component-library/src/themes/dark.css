@@ -56,6 +56,7 @@
   --color-numberNeutral: var(--palette-navy500);
   --color-budgetNumberNegative: var(--color-numberNegative);
   --color-budgetBalanceNegative: #ff0000;
+  --color-amountCredit: var(--color-numberPositive);
   --color-budgetNumberZero: var(--color-tableTextSubdued);
   --color-budgetNumberNeutral: var(--color-tableText);
   --color-budgetNumberPositive: var(--color-budgetNumberNeutral);

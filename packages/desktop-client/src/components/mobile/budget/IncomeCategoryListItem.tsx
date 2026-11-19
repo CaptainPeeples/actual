@@ -152,6 +152,7 @@ function IncomeCategoryCells({
           binding={balance}
           category={category}
           onPress={onPress}
+          showCredit
           aria-label={
             budgetType === 'envelope'
               ? t('Open balance menu for {{categoryName}} category', {

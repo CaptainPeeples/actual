@@ -30,7 +30,11 @@ import {
   usePress,
 } from '@react-aria/interactions';
 
-import { makeAmountFullStyle } from '#components/budget/util';
+import {
+  makeAmountFullStyle,
+  makeCreditStyle,
+  withCreditSign,
+} from '#components/budget/util';
 import { TransferDirectionIcon } from '#components/common/TransferDirectionIcon';
 import { useAccount } from '#hooks/useAccount';
 import { useCachedSchedules } from '#hooks/useCachedSchedules';
@@ -317,9 +321,10 @@ export function TransactionListItem({
                     zeroColor: theme.numberNeutral,
                   }),
                   ...textStyle,
+                  ...makeCreditStyle(amount),
                 }}
               >
-                {integerToCurrency(amount)}
+                {withCreditSign(amount, integerToCurrency(amount))}
               </Text>
               {showRunningBalance && runningBalance !== undefined && (
                 <Text

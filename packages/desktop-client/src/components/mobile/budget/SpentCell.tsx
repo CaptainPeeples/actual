@@ -12,7 +12,11 @@ import { View } from '@actual-app/components/view';
 import type { CategoryEntity } from '@actual-app/core/types/models';
 import { AutoTextSize } from 'auto-text-size';
 
-import { makeAmountGrey } from '#components/budget/util';
+import {
+  makeAmountGrey,
+  makeCreditStyle,
+  withCreditSign,
+} from '#components/budget/util';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { CellValue } from '#components/spreadsheet/CellValue';
 import { useCategoryScheduleGoalTemplateIndicator } from '#hooks/useCategoryScheduleGoalTemplateIndicator';
@@ -78,12 +82,13 @@ export function SpentCell({
                 style={{
                   ...styles.tnum,
                   ...makeAmountGrey(value),
+                  ...makeCreditStyle(value),
                   maxWidth: columnWidth,
                   textAlign: 'right',
                   fontSize: 12,
                 }}
               >
-                {format(value, type)}
+                {withCreditSign(value, format(value, type))}
               </AutoTextSize>
             </PrivacyFilter>
           </Button>

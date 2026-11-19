@@ -2028,9 +2028,10 @@ const Transaction = memo(function Transaction({
             value={credit}
             formatter={value =>
               // reformat value so since we might have kept decimals
-              value ? amountToCurrency(currencyToAmount(value) || 0) : ''
+              // Custom branch: credits show a "+" in front
+              value ? '+' + amountToCurrency(currencyToAmount(value) || 0) : ''
             }
-            valueStyle={valueStyle}
+            valueStyle={{ ...valueStyle, color: theme.amountCredit }}
             textAlign="right"
             title={credit}
             onExpose={name => !isPreview && onEdit(id, name)}

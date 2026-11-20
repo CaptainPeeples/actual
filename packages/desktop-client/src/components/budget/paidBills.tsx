@@ -1,14 +1,13 @@
 // Custom branch: bills paid through schedules.
 //
-// A category's bill is paid for a month once every schedule that belongs to
-// it has a transaction linked to it that month (in any category, since one
-// payee can bill more than one category). A schedule belongs to a category
-// when it was linked to a transaction in that category, or its payee shows
-// up there, that month or in the 3 months before.
+// A schedule belongs to the category its rule sets ("set category" on the
+// schedule's rule). A schedule without one belongs wherever it was linked in
+// the last 3 months. A bill category is paid for a month once every schedule
+// of it that is due that month has a transaction linked to it.
 //
-// The projected end of month uses this to free up what a paid bill didn't
-// use, and the budget page shows a ✓ on paid bills and on groups whose
-// bills are all paid.
+// The projected end of month holds only the bills a bill category still
+// owes (like a paper budget with bills checked off), and the budget page
+// shows a ✓ on paid bills and on groups whose bills are all paid.
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
@@ -31,7 +30,9 @@ export type LinkedTransaction = {
 export type OpenSchedule = {
   id: string;
   next_date: string | null;
-  _payee: string | null;
+  _payee?: string | null;
+  _amount?: number | { num1: number; num2: number } | null;
+  _actions?: Array<{ field?: string; op?: string; value?: unknown }> | null;
 };
 
 export type BillStatus = {
@@ -39,72 +40,92 @@ export type BillStatus = {
   paid: Set<string>;
   // Categories that have a bill this month, paid or not.
   hasBills: Set<string>;
+  // Categories with any bill schedule at all, even one not due this month.
+  billCategories: Set<string>;
+  // What each bill category still owes this month (a positive amount).
+  owed: Map<string, number>;
 };
+
+// The category a schedule's rule sets, if any.
+function scheduleCategory(s: OpenSchedule): string | null {
+  const action = (s._actions ?? []).find(
+    a => a.op === 'set' && a.field === 'category' && a.value,
+  );
+  return action ? String(action.value) : null;
+}
+
+function scheduleCost(s: OpenSchedule): number {
+  const raw = s._amount;
+  const amount =
+    typeof raw === 'number' ? raw : raw ? (raw.num1 + raw.num2) / 2 : 0;
+  return Math.max(0, -Math.round(amount));
+}
 
 export function billStatus(
   transactions: LinkedTransaction[],
   schedules: OpenSchedule[],
   month: string,
 ): BillStatus {
-  const monthStart = monthUtils.firstDayOfMonth(
+  const lookbackStart = monthUtils.firstDayOfMonth(
     monthUtils.subMonths(month, LOOKBACK_MONTHS),
   );
   const monthEnd = monthUtils.lastDayOfMonth(month);
   const linkedThisMonth = new Set<string>();
   const paidThisMonth = new Set<string>();
   const belongs = new Map<string, Set<string>>();
-  const byPayee = new Map<string, string[]>();
-  for (const s of schedules) {
-    if (!s._payee) continue;
-    byPayee.set(s._payee, [...(byPayee.get(s._payee) ?? []), s.id]);
-  }
   const add = (category: string, id: string) => {
     const set = belongs.get(category) ?? new Set<string>();
     set.add(id);
     belongs.set(category, set);
   };
-  for (const t of transactions) {
-    if (!t.category || t.date < monthStart || t.date > monthEnd) continue;
-    if (t.schedule) {
-      add(t.category, t.schedule);
-      if (monthUtils.monthFromDate(t.date) === month) {
-        linkedThisMonth.add(t.category);
-        paidThisMonth.add(t.schedule);
-      }
-    }
-    for (const id of (t.payee && byPayee.get(t.payee)) || []) {
-      add(t.category, id);
+  // A schedule whose rule sets a category belongs to that category.
+  // Otherwise it belongs wherever it was linked lately.
+  const withCategory = new Set<string>();
+  for (const s of schedules) {
+    const category = scheduleCategory(s);
+    if (category) {
+      add(category, s.id);
+      withCategory.add(s.id);
     }
   }
-  const dueByMonthEnd = new Set(
-    schedules
-      .filter(s => s.next_date && s.next_date <= monthEnd)
-      .map(s => s.id),
-  );
+  for (const t of transactions) {
+    if (!t.schedule || t.date < lookbackStart || t.date > monthEnd) continue;
+    if (monthUtils.monthFromDate(t.date) === month) {
+      paidThisMonth.add(t.schedule);
+      if (t.category) linkedThisMonth.add(t.category);
+    }
+    if (t.category && !withCategory.has(t.schedule)) {
+      add(t.category, t.schedule);
+    }
+  }
+  const open = new Map(schedules.map(s => [s.id, s]));
   const paid = new Set<string>();
   const hasBills = new Set<string>();
+  const billCategories = new Set<string>();
+  const owed = new Map<string, number>();
   for (const [category, ids] of belongs) {
-    const thisMonth = [...ids].filter(
-      id => dueByMonthEnd.has(id) || paidThisMonth.has(id),
-    );
-    if (thisMonth.length === 0) continue;
-    hasBills.add(category);
-    if (
-      linkedThisMonth.has(category) &&
-      thisMonth.every(id => paidThisMonth.has(id))
-    ) {
-      paid.add(category);
+    billCategories.add(category);
+    let stillOwed = 0;
+    let anyThisMonth = false;
+    let anyUnpaid = false;
+    for (const id of ids) {
+      if (paidThisMonth.has(id)) {
+        anyThisMonth = true;
+        continue;
+      }
+      const s = open.get(id);
+      if (s?.next_date && s.next_date <= monthEnd) {
+        anyThisMonth = true;
+        anyUnpaid = true;
+        stillOwed += scheduleCost(s);
+      }
     }
+    owed.set(category, stillOwed);
+    if (!anyThisMonth) continue;
+    hasBills.add(category);
+    if (linkedThisMonth.has(category) && !anyUnpaid) paid.add(category);
   }
-  return { paid, hasBills };
-}
-
-export function paidBillCategories(
-  transactions: LinkedTransaction[],
-  schedules: OpenSchedule[],
-  month: string,
-): Set<string> {
-  return billStatus(transactions, schedules, month).paid;
+  return { paid, hasBills, billCategories, owed };
 }
 
 // True when a group has at least one bill and all of them are paid.
@@ -137,7 +158,7 @@ export function useBillData(firstMonth: string, lastMonth: string) {
     () =>
       q('schedules')
         .filter({ completed: false })
-        .select(['id', 'next_date', '_payee']),
+        .select(['id', 'next_date', '_payee', '_amount', '_actions']),
     [],
   );
   return { transactions, schedules };

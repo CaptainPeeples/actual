@@ -53,15 +53,17 @@ How each line is figured:
 | Bills not paid yet  | For **each expense category**: budgeted − spent, kept between 0 and the budgeted amount. A category that's paid, or overspent, counts as 0. Refunds can't make a category look like it owes more than it was budgeted. A weekly category whose week is already over counts as 0 (see section 7). A bill category whose schedules are all paid counts as 0 (see below). |
 | Next month's bills  | Total budgeted expenses for next month.                                                                                                                                                                                                                                                                                                                                |
 
-**Paid bills free up their leftover.** If a bill comes in under budget (say
-water is budgeted at 150 and the bill is 100), the 50 left over counts as
-money you keep, as soon as the bill is paid. A category counts as paid once
-every schedule that belongs to it has a transaction linked to it this month.
-A schedule belongs to a category when it was linked to a transaction there, or
-its payee shows up there, in the last 3 months. If a bill is far off its usual
-amount and the schedule doesn't match it, open the schedule and link the
-transaction by hand. Categories with no schedules (groceries, gas) work the
-same as before. The category's own Balance column still shows the leftover.
+**Bill categories hold only the bills still due.** A category with bills in
+Schedules works like a paper budget with bills checked off: it holds only the
+scheduled bills not paid yet this month, not its leftover budget. So a bill
+that comes in under budget frees up the rest, and a surprise charge can't hide
+a bill that's still coming. To tie a bill to its category, add a "set
+category" action to the schedule's rule (Schedules → edit → the rule). A
+schedule without one counts for the category it was linked to in the last 3
+months. A bill is paid once a transaction is linked to it; if the amount is
+far off and it doesn't match, open the schedule and link the transaction by
+hand. An "is between" amount counts as the middle of the range. Categories
+with no bills (groceries, gas) still use budgeted − spent.
 
 Hover over the number to see the breakdown. Past and future months still show
 stock Actual's "Projected savings" / "Saved". The phone layout shows it too, in
@@ -176,9 +178,9 @@ Code: `makeCreditStyle` and `withCreditSign` in
 
 ### 9. ✓ on paid bills
 
-On the budget page, a bill category gets a **✓** once its bills are paid for
-that month (the same rule as "Paid bills free up their leftover" in section
-3). A group gets a ✓ once every bill category in it is paid. Categories
+On the budget page, a bill category gets a **✓** once its bills due that
+month are paid (see "Bill categories hold only the bills still due" in
+section 3). A group gets a ✓ once every bill category in it is paid. Categories
 without bills don't affect the group's ✓. On the computer the ✓ is in the
 Spent column; on the phone it's after the name. The ✓ uses the normal text
 color.

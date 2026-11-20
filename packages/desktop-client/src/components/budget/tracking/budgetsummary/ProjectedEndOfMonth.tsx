@@ -8,14 +8,15 @@
 //                                          negative "carryover" line or one
 //                                          category coming in over budget
 //                                          can't cancel out other paychecks)
-//   - bills still unpaid this month      (per expense category:
+//   - bills still unpaid this month      (a bill category, one with
+//                                          schedules, counts the bills it
+//                                          still owes this month; any other
+//                                          expense category counts
 //                                          budgeted - spent, clamped to
 //                                          0..budgeted so refunds and
-//                                          overspending don't skew it;
+//                                          overspending don't skew it, and
 //                                          a weekly category whose week is
-//                                          already over counts 0, and so
-//                                          does a bill category whose
-//                                          schedules are all paid)
+//                                          already over counts 0)
 //   - next month's budgeted expenses
 import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -35,7 +36,7 @@ import {
 } from '@actual-app/core/shared/weekly-categories';
 import { css } from '@emotion/css';
 
-import { paidBillCategories, useBillData } from '#components/budget/paidBills';
+import { billStatus, useBillData } from '#components/budget/paidBills';
 import { useTrackingSheetValue } from '#components/budget/tracking/TrackingBudgetComponents';
 import { makeAmountFullStyle } from '#components/budget/util';
 import { FinancialText } from '#components/FinancialText';
@@ -67,9 +68,15 @@ export function unpaidBills(
   cells: MonthCells,
   expenseIds: string[],
   isOver: (id: string) => boolean = () => false,
+  billsOwed: Map<string, number> = new Map(),
 ) {
   let total = 0;
   for (const id of expenseIds) {
+    const owed = billsOwed.get(id);
+    if (owed !== undefined) {
+      total += owed;
+      continue;
+    }
     if (isOver(id)) continue;
     const budgeted = cellValue(cells, `budget-${id}`);
     const spent = cellValue(cells, `sum-amount-${id}`);
@@ -132,13 +139,13 @@ export function useProjectedEndOfMonth(month: string) {
     const today = monthUtils.currentDay();
     const names = new Map(live.map(c => [c.id, c.name]));
     const incomeIds = live.filter(c => c.is_income).map(c => c.id);
-    const paid = paidBillCategories(
+    const { owed } = billStatus(
       [...(linked ?? [])],
       [...(openSchedules ?? [])],
       month,
     );
     const isOver = (id: string) =>
-      paid.has(id) || weekIsOver(names.get(id) ?? '', month, today);
+      weekIsOver(names.get(id) ?? '', month, today);
 
     void (async () => {
       const [thisMonth, nextMonth, balanceResult] = await Promise.all([
@@ -152,7 +159,7 @@ export function useProjectedEndOfMonth(month: string) {
       setParts({
         balance: (balanceResult.data as number) || 0,
         incomeLeft: incomeStillComing(thisMonth || [], incomeIds),
-        unpaid: unpaidBills(thisMonth || [], expenseIds, isOver),
+        unpaid: unpaidBills(thisMonth || [], expenseIds, isOver, owed),
         nextMonth: cellValue(nextMonth || [], 'total-budgeted'),
       });
     })();

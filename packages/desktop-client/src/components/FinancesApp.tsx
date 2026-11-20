@@ -46,6 +46,7 @@ import {
   Settings,
   SettingsIndex,
 } from './settings';
+import { DefaultBudgetSettings } from './settings/DefaultBudget';
 import { FloatableSidebar } from './sidebar';
 import { SidebarMenuRoute } from './sidebar/SidebarMenuRoute';
 import { StartPageRedirect } from './StartPageRedirect';
@@ -400,6 +401,10 @@ export function FinancesApp() {
                     <Route path="/settings" element={<Settings />}>
                       <Route index element={<SettingsIndex />} />
                       <Route path="general" element={<GeneralSettings />} />
+                      <Route
+                        path="default-budget"
+                        element={<DefaultBudgetSettings />}
+                      />
                       <Route
                         path="schedules"
                         element={

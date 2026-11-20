@@ -181,7 +181,7 @@ type SettingsSectionsProps = {
   children: ReactNode;
 };
 
-function SettingsSections({ title, children }: SettingsSectionsProps) {
+export function SettingsSections({ title, children }: SettingsSectionsProps) {
   const { isNarrowWidth } = useResponsive();
 
   const sections = (

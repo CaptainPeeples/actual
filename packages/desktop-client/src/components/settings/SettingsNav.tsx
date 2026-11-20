@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next';
 
 import { useResponsive } from '@actual-app/components/hooks/useResponsive';
-import { SvgCog, SvgPylon } from '@actual-app/components/icons/v1';
+import {
+  SvgCog,
+  SvgPiggyBank,
+  SvgPylon,
+} from '@actual-app/components/icons/v1';
 import { SvgSettingsSliderAlternate } from '@actual-app/components/icons/v2';
 import { theme } from '@actual-app/components/theme';
 import { spacing } from '@actual-app/components/tokens';
@@ -52,6 +56,12 @@ export function SettingsNav() {
         title={t('General')}
         Icon={SvgCog}
         to="/settings/general"
+      />
+      {/* Custom branch: default budget for future months. */}
+      <SettingsNavLink
+        title={t('Default budget')}
+        Icon={SvgPiggyBank}
+        to="/settings/default-budget"
       />
       {menuItems.map(item => (
         <SettingsNavLink

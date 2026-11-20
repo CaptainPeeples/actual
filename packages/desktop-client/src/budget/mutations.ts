@@ -620,6 +620,11 @@ type ApplyBudgetActionPayload =
       args?: never;
     }
   | {
+      type: 'copy-default';
+      month: string;
+      args?: never;
+    }
+  | {
       type: 'set-zero';
       month: string;
       args?: never;
@@ -778,12 +783,43 @@ export function useBudgetActions() {
   return useMutation({
     mutationFn: async ({ month, type, args }: ApplyBudgetActionPayload) => {
       switch (type) {
-        case 'budget-amount':
+        case 'budget-amount': {
+          // Custom branch: once a default budget is set up, ask whether a
+          // change is for this month only or the new default.
+          const edit = await send('budget/default-budget-for-edit', {
+            month,
+            category: args.category,
+          });
           await send('budget/budget-amount', {
             month,
             category: args.category,
             amount: args.amount,
           });
+          if (
+            edit.enabled &&
+            args.amount !== edit.current &&
+            args.amount !== edit.defaultAmount
+          ) {
+            const choice = { month, ...args };
+            dispatch(
+              pushModal({
+                modal: {
+                  name: 'default-budget-choice',
+                  options: {
+                    ...choice,
+                    onOnlyThisMonth: () =>
+                      void send('budget/budget-amount-only-this-month', choice),
+                    onChangeDefault: () =>
+                      void send('budget/default-budget-set', choice),
+                  },
+                },
+              }),
+            );
+          }
+          return null;
+        }
+        case 'copy-default':
+          await send('budget/copy-default', { month });
           return null;
         case 'copy-last':
           await send('budget/copy-previous-month', { month });

@@ -607,6 +607,17 @@ export type Modal =
       };
     }
   | {
+      // Custom branch: this month only, or the default budget?
+      name: 'default-budget-choice';
+      options: {
+        month: string;
+        category: string;
+        amount: number;
+        onOnlyThisMonth: () => void;
+        onChangeDefault: () => void;
+      };
+    }
+  | {
       name: 'confirm-delete';
       options: {
         message: string;

@@ -200,6 +200,34 @@ month** is now **Projected**.
 
 Code: `packages/desktop-client/src/components/budget/paidBills.tsx`
 
+### 10. Default budget
+
+**Settings → Default budget** lists every group and category like the budget
+page, with a default amount for each. Click an amount to change it. Group and
+section totals update as you go.
+
+- **Every month after the current one follows the defaults.** Changing a
+  default updates that category in all later months at once. The current
+  month and past months only change when you change them.
+- The first time the page opens, the defaults start from next month's budget,
+  and every later month is set to match.
+- **New months** added to the end of the budget start with the defaults.
+- **Changing a budget amount** on the budget page (desktop or phone) asks:
+  _Only this month_ or _Change the default_. It only asks once defaults are
+  set up, and only when the new amount differs from both the old amount and
+  the default. Closing the pop-up counts as _Only this month_.
+- An _Only this month_ change in a future month is kept: later default changes
+  skip that category in that month.
+- **Copy default budget** in a month's menu sets the whole month to the
+  defaults and clears its _Only this month_ changes.
+
+The defaults are saved as synced preferences (`defaultBudget`,
+`defaultBudgetOneOff`), so they follow the budget file to every device.
+
+Code: `packages/loot-core/src/server/budget/default-budget.ts`,
+`packages/desktop-client/src/components/settings/DefaultBudget.tsx`,
+`packages/desktop-client/src/components/modals/DefaultBudgetChoiceModal.tsx`
+
 ## Docker image
 
 Every push to `peeples` builds and publishes an image with GitHub Actions

@@ -9,6 +9,8 @@ import { useFeatureFlag } from '#hooks/useFeatureFlag';
 
 export type BudgetMonthMenuActions = {
   onCopyLastMonthBudget: () => void;
+  // Custom branch: fill the month from the default budget.
+  onCopyDefaultBudget: () => void;
   onSetBudgetsToZero: () => void;
   onSetMonthsAverage: (numberOfMonths: number) => void;
   onCheckTemplates: () => void;
@@ -18,6 +20,7 @@ export type BudgetMonthMenuActions = {
 
 export function useBudgetMonthMenu({
   onCopyLastMonthBudget,
+  onCopyDefaultBudget,
   onSetBudgetsToZero,
   onSetMonthsAverage,
   onCheckTemplates,
@@ -31,6 +34,9 @@ export function useBudgetMonthMenu({
     switch (name) {
       case 'copy-last':
         onCopyLastMonthBudget();
+        break;
+      case 'copy-default':
+        onCopyDefaultBudget();
         break;
       case 'set-zero':
         onSetBudgetsToZero();
@@ -60,6 +66,7 @@ export function useBudgetMonthMenu({
 
   const items: MenuItemObject<string>[] = [
     { name: 'copy-last', text: t("Copy last month's budget") },
+    { name: 'copy-default', text: t('Copy default budget') },
     { name: 'set-zero', text: t('Set budgets to zero') },
     {
       name: 'set-3-avg',
@@ -102,6 +109,7 @@ type BudgetMonthMenuProps = Omit<
 
 export function BudgetMonthMenu({
   onCopyLastMonthBudget,
+  onCopyDefaultBudget,
   onSetBudgetsToZero,
   onSetMonthsAverage,
   onCheckTemplates,
@@ -111,6 +119,7 @@ export function BudgetMonthMenu({
 }: BudgetMonthMenuProps) {
   const { items, onMenuSelect } = useBudgetMonthMenu({
     onCopyLastMonthBudget,
+    onCopyDefaultBudget,
     onSetBudgetsToZero,
     onSetMonthsAverage,
     onCheckTemplates,

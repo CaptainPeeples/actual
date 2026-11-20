@@ -23,6 +23,7 @@ export function TrackingBudgetMonthMenuModal({
 
   const { items, onMenuSelect } = useBudgetMonthMenu({
     onCopyLastMonthBudget: () => onBudgetAction(month, 'copy-last'),
+    onCopyDefaultBudget: () => onBudgetAction(month, 'copy-default'),
     onSetBudgetsToZero: () => onBudgetAction(month, 'set-zero'),
     onSetMonthsAverage: numberOfMonths =>
       onBudgetAction(month, `set-${numberOfMonths}-avg`),
@@ -35,6 +36,10 @@ export function TrackingBudgetMonthMenuModal({
   const undoMessages = {
     'copy-last': t(
       "{{displayMonth}} budgets have all been set to last month's budgeted amounts.",
+      { displayMonth },
+    ),
+    'copy-default': t(
+      '{{displayMonth}} budgets have all been set to the default budget.',
       { displayMonth },
     ),
     'set-zero': t('{{displayMonth}} budgets have all been set to zero.', {

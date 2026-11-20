@@ -1,3 +1,4 @@
+import { logger } from '#platform/server/log';
 import { aqlQuery } from '#server/aql';
 import * as db from '#server/db';
 import * as sheet from '#server/sheet';
@@ -9,6 +10,7 @@ import { getChangedValues } from '#shared/util';
 import type { CategoryGroupEntity } from '#types/models';
 
 import * as budgetActions from './actions';
+import { fillNewMonthsWithDefaults } from './default-budget';
 import * as envelopeBudget from './envelope';
 import * as trackingBudget from './tracking';
 
@@ -441,6 +443,12 @@ export async function createAllBudgets() {
 
   if (newMonths.length > 0) {
     await createBudget(range);
+    // Custom branch: new months start with the default budget.
+    try {
+      await fillNewMonthsWithDefaults(newMonths);
+    } catch (e) {
+      logger.error('Could not fill new months with the default budget', e);
+    }
   }
 
   return { start, end };

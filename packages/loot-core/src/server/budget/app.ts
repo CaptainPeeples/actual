@@ -17,6 +17,7 @@ import * as budget from './base';
 import * as cleanupGroupActions from './cleanup-groups';
 import * as cleanupActions from './cleanup-template';
 import { storeNoteCleanups } from './cleanup-template-notes';
+import * as defaultBudget from './default-budget';
 import * as goalActions from './goal-template';
 import { sortCategories } from './sort-categories';
 import * as goalNoteActions from './template-notes';
@@ -26,6 +27,12 @@ export type BudgetHandlers = {
   'budget/copy-previous-month': typeof actions.copyPreviousMonth;
   'budget/copy-single-month': typeof actions.copySinglePreviousMonth;
   'budget/set-zero': typeof actions.setZero;
+  'budget/default-budget-get': typeof defaultBudget.getDefaultBudget;
+  'budget/default-budget-for-edit': typeof defaultBudget.getDefaultBudgetForEdit;
+  'budget/default-budget-setup': typeof defaultBudget.setUpDefaultBudget;
+  'budget/default-budget-set': typeof defaultBudget.setDefaultBudgetAmount;
+  'budget/budget-amount-only-this-month': typeof defaultBudget.setBudgetOnlyThisMonth;
+  'budget/copy-default': typeof defaultBudget.copyDefaultBudget;
   'budget/set-3month-avg': typeof actions.set3MonthAvg;
   'budget/set-6month-avg': typeof actions.set6MonthAvg;
   'budget/set-12month-avg': typeof actions.set12MonthAvg;
@@ -81,6 +88,28 @@ app.method(
   mutator(undoable(actions.copySinglePreviousMonth)),
 );
 app.method('budget/set-zero', mutator(undoable(actions.setZero)));
+// Custom branch: default budget (see ./default-budget).
+app.method('budget/default-budget-get', defaultBudget.getDefaultBudget);
+app.method(
+  'budget/default-budget-for-edit',
+  defaultBudget.getDefaultBudgetForEdit,
+);
+app.method(
+  'budget/default-budget-setup',
+  mutator(defaultBudget.setUpDefaultBudget),
+);
+app.method(
+  'budget/default-budget-set',
+  mutator(undoable(defaultBudget.setDefaultBudgetAmount)),
+);
+app.method(
+  'budget/budget-amount-only-this-month',
+  mutator(undoable(defaultBudget.setBudgetOnlyThisMonth)),
+);
+app.method(
+  'budget/copy-default',
+  mutator(undoable(defaultBudget.copyDefaultBudget)),
+);
 app.method('budget/set-3month-avg', mutator(undoable(actions.set3MonthAvg)));
 app.method('budget/set-6month-avg', mutator(undoable(actions.set6MonthAvg)));
 app.method('budget/set-12month-avg', mutator(undoable(actions.set12MonthAvg)));

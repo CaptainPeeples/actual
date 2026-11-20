@@ -36,6 +36,7 @@ import { CoverModal } from './modals/CoverModal';
 import { CreateAccountModal } from './modals/CreateAccountModal';
 import { CreateEncryptionKeyModal } from './modals/CreateEncryptionKeyModal';
 import { CreateLocalAccountModal } from './modals/CreateLocalAccountModal';
+import { DefaultBudgetChoiceModal } from './modals/DefaultBudgetChoiceModal';
 import { EditUserAccess } from './modals/EditAccess';
 import { EditFieldModal } from './modals/EditFieldModal';
 import { EditRuleModal } from './modals/EditRuleModal';
@@ -167,6 +168,9 @@ export function Modals() {
 
         case 'confirm-delete':
           return <ConfirmDeleteModal key={key} {...modal.options} />;
+
+        case 'default-budget-choice':
+          return <DefaultBudgetChoiceModal key={key} {...modal.options} />;
 
         case 'copy-widget-to-dashboard':
           return <CopyWidgetToDashboardModal key={key} {...modal.options} />;

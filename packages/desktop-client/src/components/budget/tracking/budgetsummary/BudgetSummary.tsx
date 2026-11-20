@@ -179,6 +179,16 @@ export function BudgetSummary({ month }: BudgetSummaryProps) {
                       ),
                     });
                   }}
+                  onCopyDefaultBudget={() => {
+                    onBudgetAction(month, 'copy-default');
+                    onMenuClose();
+                    showUndoNotification({
+                      message: t(
+                        '{{displayMonth}} budgets have all been set to the default budget.',
+                        { displayMonth },
+                      ),
+                    });
+                  }}
                   onSetBudgetsToZero={() => {
                     onBudgetAction(month, 'set-zero');
                     onMenuClose();

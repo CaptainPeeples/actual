@@ -57,6 +57,7 @@ const PRIVACY_FILTER_TYPES = [
   'financial',
   'financial-with-sign',
   'financial-no-decimals',
+  'financial-dollars',
 ];
 
 type CellValueTextProps<
@@ -88,7 +89,8 @@ export function CellValueText<
   const isFinancial =
     type === 'financial' ||
     type === 'financial-with-sign' ||
-    type === 'financial-no-decimals';
+    type === 'financial-no-decimals' ||
+    type === 'financial-dollars';
   const sharedProps = {
     style,
     'data-testid': name,

@@ -220,6 +220,10 @@ export function CheckField({ paid }: { paid: boolean }) {
         flexShrink: 0,
         alignItems: 'center',
         justifyContent: 'center',
+        // Same row lines as the table's other cells.
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: theme.tableBorder,
       }}
     >
       {paid && <Text style={{ color: theme.tableText }}>✓</Text>}

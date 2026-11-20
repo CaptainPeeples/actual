@@ -264,7 +264,7 @@ function IncomeGroupCells({ group }: IncomeGroupCellsProps) {
       {budgeted && (
         <CellValue<'envelope-budget' | 'tracking-budget', 'group-budget'>
           binding={budgeted}
-          type="financial-no-decimals"
+          type="financial-dollars"
         >
           {({ type, value }) => (
             <View>
@@ -295,7 +295,7 @@ function IncomeGroupCells({ group }: IncomeGroupCellsProps) {
       )}
       <CellValue<'envelope-budget' | 'tracking-budget', 'group-sum-amount'>
         binding={balance}
-        type="financial-no-decimals"
+        type="financial-dollars"
       >
         {({ type, value }) => (
           <View>

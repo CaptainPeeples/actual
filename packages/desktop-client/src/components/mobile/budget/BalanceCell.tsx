@@ -71,7 +71,7 @@ export function BalanceCell({
       aria-label={t('Balance for {{categoryName}} category', {
         categoryName: category.name,
       })} // Translated aria-label
-      type="financial-no-decimals"
+      type="financial-dollars"
       carryover={carryover}
       balance={binding}
       goal={goal}

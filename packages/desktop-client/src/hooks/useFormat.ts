@@ -22,7 +22,9 @@ export type FormatType =
   | 'percentage'
   | 'financial'
   | 'financial-with-sign'
-  | 'financial-no-decimals';
+  | 'financial-no-decimals'
+  // Custom branch: whole dollars with a $ sign (budget page rows).
+  | 'financial-dollars';
 
 export type UseFormatResult = {
   (value: unknown, type?: FormatType): string;
@@ -65,6 +67,7 @@ function format(
       return { formattedString: value + '%' };
     case 'financial-with-sign':
     case 'financial-no-decimals':
+    case 'financial-dollars':
     case 'financial': {
       let localValue = value;
       if (localValue == null || localValue === '') {
@@ -168,12 +171,17 @@ export function useFormat(): UseFormatResult {
       const isFinancialType =
         type === 'financial' ||
         type === 'financial-with-sign' ||
-        type === 'financial-no-decimals';
+        type === 'financial-no-decimals' ||
+        type === 'financial-dollars';
 
       let displayDecimalPlaces: number | undefined;
 
       if (isFinancialType) {
-        if (type === 'financial-no-decimals' || hideFractionPref === 'true') {
+        if (
+          type === 'financial-no-decimals' ||
+          type === 'financial-dollars' ||
+          hideFractionPref === 'true'
+        ) {
           displayDecimalPlaces = 0;
         } else {
           displayDecimalPlaces = activeCurrency.decimalPlaces;
@@ -198,6 +206,14 @@ export function useFormat(): UseFormatResult {
           formattedString,
           activeCurrency.symbol,
         );
+      }
+
+      // Custom branch: "$" in front (after any minus sign) when no currency
+      // symbol is set; a set currency already adds its own symbol.
+      if (type === 'financial-dollars' && !activeCurrency?.code) {
+        styledValue = styledValue.startsWith('-')
+          ? '-$' + styledValue.slice(1)
+          : '$' + styledValue;
       }
 
       if (

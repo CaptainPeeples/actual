@@ -174,7 +174,7 @@ export function BudgetCell<
   return (
     <CellValue
       binding={binding}
-      type="financial-no-decimals"
+      type="financial-dollars"
       aria-label={t('Budgeted amount for {{categoryName}} category', {
         categoryName: category.name,
       })}

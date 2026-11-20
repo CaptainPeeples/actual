@@ -185,8 +185,10 @@ still due" in section 3), and a group gets a ✓ once every bill category in it
 is paid. Categories without bills don't affect the group's ✓. The ✓ uses the
 normal text color. On the phone the names column is 5% narrower to make room.
 
-Group and category numbers (Budget, Spent, Balance) show **whole dollars**,
-rounded to the nearest dollar (2,452.49 shows as 2,452). Typing a budget still
+Group and category numbers (Budget, Spent, Balance) show **whole dollars with a
+$ sign**, rounded to the nearest dollar (2,452.49 shows as $2,452; −2,452.49
+shows as -$2,452). This uses a new number format, `financial-dollars`; if a
+currency is set in Settings, its own symbol is used instead of $. Typing a budget still
 takes cents, and the totals at the top keep their cents.
 
 Labels are shorter: **Budgeted** is now **Budget**, and **Projected end of

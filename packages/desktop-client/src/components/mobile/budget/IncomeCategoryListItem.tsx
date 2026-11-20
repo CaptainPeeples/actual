@@ -133,7 +133,7 @@ function IncomeCategoryCells({
         >
           <BudgetCell
             binding={budgeted}
-            type="financial-no-decimals"
+            type="financial-dollars"
             category={category}
             month={month}
             onBudgetAction={onBudgetAction}

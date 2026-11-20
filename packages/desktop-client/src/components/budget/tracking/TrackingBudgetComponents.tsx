@@ -172,7 +172,7 @@ export const GroupMonth = memo(function GroupMonth({
         style={{ fontWeight: 600, ...styles.tnum }}
         valueProps={{
           binding: trackingBudget.groupBudgeted(id),
-          type: 'financial-no-decimals',
+          type: 'financial-dollars',
         }}
       />
       <TrackingSheetCell
@@ -182,7 +182,7 @@ export const GroupMonth = memo(function GroupMonth({
         style={{ fontWeight: 600, ...styles.tnum }}
         valueProps={{
           binding: trackingBudget.groupSumAmount(id),
-          type: 'financial-no-decimals',
+          type: 'financial-dollars',
         }}
       />
       {!group.is_income && (
@@ -197,7 +197,7 @@ export const GroupMonth = memo(function GroupMonth({
           }}
           valueProps={{
             binding: trackingBudget.groupBalance(id),
-            type: 'financial-no-decimals',
+            type: 'financial-dollars',
             getValueStyle: value =>
               typeof value === 'number' && value < 0
                 ? { color: theme.budgetBalanceNegative }
@@ -397,7 +397,7 @@ export const CategoryMonth = memo(function CategoryMonth({
           }}
           valueProps={{
             binding: trackingBudget.catBudgeted(category.id),
-            type: 'financial-no-decimals',
+            type: 'financial-dollars',
             getValueStyle: makeAmountGrey,
             formatExpr: format.forEdit,
             unformatExpr: format.fromEdit,
@@ -459,7 +459,7 @@ export const CategoryMonth = memo(function CategoryMonth({
           )}
           <TrackingCellValue
             binding={trackingBudget.catSumAmount(category.id)}
-            type="financial-no-decimals"
+            type="financial-dollars"
           >
             {props => (
               <CellValueText
@@ -495,7 +495,7 @@ export const CategoryMonth = memo(function CategoryMonth({
             }}
           >
             <BalanceWithCarryover
-              type="financial-no-decimals"
+              type="financial-dollars"
               isDisabled={category.is_income}
               carryover={trackingBudget.catCarryover(category.id)}
               balance={trackingBudget.catBalance(category.id)}

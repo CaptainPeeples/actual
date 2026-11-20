@@ -333,7 +333,7 @@ function ExpenseGroupCells({
       >
         <CellValue<'envelope-budget' | 'tracking-budget', 'group-budget'>
           binding={budgeted}
-          type="financial-no-decimals"
+          type="financial-dollars"
         >
           {({ type, value }) => (
             <View>
@@ -360,7 +360,7 @@ function ExpenseGroupCells({
       >
         <CellValue<'envelope-budget' | 'tracking-budget', 'group-sum-amount'>
           binding={spent}
-          type="financial-no-decimals"
+          type="financial-dollars"
         >
           {({ type, value }) => (
             <View>
@@ -382,7 +382,7 @@ function ExpenseGroupCells({
       </View>
       <CellValue<'envelope-budget' | 'tracking-budget', 'group-leftover'>
         binding={balance}
-        type="financial-no-decimals"
+        type="financial-dollars"
       >
         {({ type, value }) => (
           <View>

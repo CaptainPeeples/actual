@@ -18,6 +18,12 @@
 //                                          a weekly category whose week is
 //                                          already over counts 0)
 //   - next month's budgeted expenses
+//
+// Next month shows the same thing one month ahead: where the current month
+// ends (balance + income still coming - bills not paid yet), plus next
+// month's income, minus next month's bills, minus the month after's
+// budgeted expenses. On the 1st it becomes the current month and the same
+// math carries on with real balances, so the number doesn't jump.
 import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
@@ -34,15 +40,15 @@ import { weekIsOver } from '@actual-app/core/shared/weekly-categories';
 import { css } from '@emotion/css';
 
 import { billStatus, useBillData } from '#components/budget/paidBills';
-import { useTrackingSheetValue } from '#components/budget/tracking/TrackingBudgetComponents';
 import { makeAmountFullStyle } from '#components/budget/util';
 import { FinancialText } from '#components/FinancialText';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { useCategories } from '#hooks/useCategories';
 import { useFormat } from '#hooks/useFormat';
+import { useLocale } from '#hooks/useLocale';
 import { useSheetValue } from '#hooks/useSheetValue';
 import { aqlQuery } from '#queries/aqlQuery';
-import { onBudgetAccountBalance, trackingBudget } from '#spreadsheet/bindings';
+import { onBudgetAccountBalance } from '#spreadsheet/bindings';
 
 type MonthCells = Array<{ name: string; value: string | number | boolean }>;
 
@@ -82,37 +88,88 @@ export function incomeStillComing(cells: MonthCells, incomeIds: string[]) {
   return total;
 }
 
-type Parts = {
-  balance: number;
+type MonthParts = {
+  // Income still coming this month.
   incomeLeft: number;
+  // Bills not paid yet this month.
   unpaid: number;
-  nextMonth: number;
 };
+
+type Parts = MonthParts & {
+  balance: number;
+  // Budgeted expenses for the month after the one shown.
+  nextMonth: number;
+  // Set when the month shown is next month: that month's own income and
+  // bills, on top of where the current month ends.
+  following?: MonthParts;
+};
+
+// The current month ends with the account balance, plus income still coming,
+// minus bills not paid yet.
+export function currentMonthEnds(parts: Parts) {
+  return parts.balance + parts.incomeLeft - parts.unpaid;
+}
+
+// Current month:  balance + income left - unpaid bills - next month's bills.
+// Next month:     where the current month ends + that month's income - its
+//                 bills - the month after's bills. On the 1st, next month
+//                 becomes the current month and the same math continues
+//                 with real balances.
+export function projectedFromParts(parts: Parts) {
+  const ends = currentMonthEnds(parts);
+  const following = parts.following
+    ? parts.following.incomeLeft - parts.following.unpaid
+    : 0;
+  return ends + following - parts.nextMonth;
+}
+
+// True for the months that show "Projected end of month": the current
+// month and the one after it.
+export function showsProjectedEndOfMonth(month: string) {
+  const current = monthUtils.currentMonth();
+  return month === current || month === monthUtils.addMonths(current, 1);
+}
+
+function useSheetTotals(month: string) {
+  // Watch a month's sheet by its full name so it works inside any month's
+  // column.
+  const sheet = monthUtils.sheetForMonth(month);
+  const budgeted = useSheetValue<'tracking-budget', 'total-budgeted'>(
+    `${sheet}!total-budgeted` as 'total-budgeted',
+  );
+  const spent = useSheetValue<'tracking-budget', 'total-spent'>(
+    `${sheet}!total-spent` as 'total-spent',
+  );
+  const income = useSheetValue<'tracking-budget', 'total-income'>(
+    `${sheet}!total-income` as 'total-income',
+  );
+  const budgetedIncome = useSheetValue<'tracking-budget', 'total-budget-income'>(
+    `${sheet}!total-budget-income` as 'total-budget-income',
+  );
+  return [budgeted, spent, income, budgetedIncome].join(',');
+}
 
 type ProjectedEndOfMonthProps = {
   month: string;
   style?: CSSProperties;
 };
 
-// Shared by the desktop box and the mobile header.
+// Shared by the desktop box and the mobile header. Works for the current
+// month and for next month.
 export function useProjectedEndOfMonth(month: string) {
   const { data: categories } = useCategories();
+  const current = monthUtils.currentMonth();
+  const isNext = month === monthUtils.addMonths(current, 1);
+  const base = isNext ? current : month;
+  const after = monthUtils.addMonths(month, 1);
+
   // Changes to any of these mean the projection needs recalculating.
-  const budgetedIncome =
-    useTrackingSheetValue(trackingBudget.totalBudgetedIncome) || 0;
-  const receivedIncome = useTrackingSheetValue(trackingBudget.totalIncome) || 0;
-  const totalSpent = useTrackingSheetValue(trackingBudget.totalSpent) || 0;
-  const totalBudgeted =
-    useTrackingSheetValue(trackingBudget.totalBudgetedExpense) || 0;
-  // Next month lives on a different sheet, so watch it by its full name.
-  const nextSheet = monthUtils.sheetForMonth(monthUtils.addMonths(month, 1));
-  const nextMonthBudgeted =
-    useSheetValue<'tracking-budget', 'total-budgeted'>(
-      `${nextSheet}!total-budgeted` as 'total-budgeted',
-    ) || 0;
+  const baseTotals = useSheetTotals(base);
+  const followingTotals = useSheetTotals(monthUtils.addMonths(base, 1));
+  const afterTotals = useSheetTotals(monthUtils.addMonths(base, 2));
 
   const { transactions: linked, schedules: openSchedules } = useBillData(
-    month,
+    base,
     month,
   );
 
@@ -126,28 +183,36 @@ export function useProjectedEndOfMonth(month: string) {
     const today = monthUtils.currentDay();
     const names = new Map(live.map(c => [c.id, c.name]));
     const incomeIds = live.filter(c => c.is_income).map(c => c.id);
-    const { owed } = billStatus(
-      [...(linked ?? [])],
-      [...(openSchedules ?? [])],
-      month,
-    );
-    const isOver = (id: string) =>
-      weekIsOver(names.get(id) ?? '', month, today);
+
+    const monthParts = (m: string, cells: MonthCells): MonthParts => {
+      const { owed } = billStatus(
+        [...(linked ?? [])],
+        [...(openSchedules ?? [])],
+        m,
+      );
+      const isOver = (id: string) => weekIsOver(names.get(id) ?? '', m, today);
+      return {
+        incomeLeft: incomeStillComing(cells, incomeIds),
+        unpaid: unpaidBills(cells, expenseIds, isOver, owed),
+      };
+    };
 
     void (async () => {
-      const [thisMonth, nextMonth, balanceResult] = await Promise.all([
-        send('tracking-budget-month', { month }),
-        send('tracking-budget-month', {
-          month: monthUtils.addMonths(month, 1),
-        }),
-        aqlQuery(onBudgetAccountBalance().query),
-      ]);
+      const [baseCells, monthCells, afterCells, balanceResult] =
+        await Promise.all([
+          send('tracking-budget-month', { month: base }),
+          isNext
+            ? send('tracking-budget-month', { month })
+            : Promise.resolve(null),
+          send('tracking-budget-month', { month: after }),
+          aqlQuery(onBudgetAccountBalance().query),
+        ]);
       if (cancelled) return;
       setParts({
         balance: (balanceResult.data as number) || 0,
-        incomeLeft: incomeStillComing(thisMonth || [], incomeIds),
-        unpaid: unpaidBills(thisMonth || [], expenseIds, isOver, owed),
-        nextMonth: cellValue(nextMonth || [], 'total-budgeted'),
+        ...monthParts(base, baseCells || []),
+        nextMonth: cellValue(afterCells || [], 'total-budgeted'),
+        following: isNext ? monthParts(month, monthCells || []) : undefined,
       });
     })();
 
@@ -156,19 +221,18 @@ export function useProjectedEndOfMonth(month: string) {
     };
   }, [
     month,
+    base,
+    after,
+    isNext,
     categories,
-    budgetedIncome,
-    receivedIncome,
-    totalSpent,
-    totalBudgeted,
-    nextMonthBudgeted,
+    baseTotals,
+    followingTotals,
+    afterTotals,
     linked,
     openSchedules,
   ]);
 
-  const projected = parts
-    ? parts.balance + parts.incomeLeft - parts.unpaid - parts.nextMonth
-    : 0;
+  const projected = parts ? projectedFromParts(parts) : 0;
 
   return { parts, projected };
 }
@@ -179,7 +243,9 @@ export function ProjectedEndOfMonth({
 }: ProjectedEndOfMonthProps) {
   const { t } = useTranslation();
   const format = useFormat();
+  const locale = useLocale();
   const { parts, projected } = useProjectedEndOfMonth(month);
+  const monthName = (m: string) => monthUtils.format(m, 'MMMM', locale);
 
   const row = (label: string, value: number) => (
     <AlignedText
@@ -200,14 +266,38 @@ export function ProjectedEndOfMonth({
       <Tooltip
         style={{ ...styles.tooltip, fontSize: 14, padding: 10 }}
         content={
-          parts && (
+          parts &&
+          (parts.following ? (
+            <>
+              {row(
+                t('{{month}} ends with:', {
+                  month: monthName(monthUtils.subMonths(month, 1)),
+                }),
+                currentMonthEnds(parts),
+              )}
+              {row(
+                t('{{month}} income:', { month: monthName(month) }),
+                parts.following.incomeLeft,
+              )}
+              {row(
+                t('{{month}} bills:', { month: monthName(month) }),
+                -parts.following.unpaid,
+              )}
+              {row(
+                t('{{month}} bills:', {
+                  month: monthName(monthUtils.addMonths(month, 1)),
+                }),
+                -parts.nextMonth,
+              )}
+            </>
+          ) : (
             <>
               {row(t('Account balance:'), parts.balance)}
               {row(t('Income still coming:'), parts.incomeLeft)}
               {row(t('Bills not paid yet:'), -parts.unpaid)}
               {row(t("Next month's bills:"), -parts.nextMonth)}
             </>
-          )
+          ))
         }
         placement="bottom"
       >

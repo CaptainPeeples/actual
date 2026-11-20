@@ -65,8 +65,21 @@ far off and it doesn't match, open the schedule and link the transaction by
 hand. An "is between" amount counts as the middle of the range. Categories
 with no bills (groceries, gas) still use budgeted − spent.
 
-Hover over the number to see the breakdown. Past and future months still show
-stock Actual's "Projected savings" / "Saved". The phone layout shows it too, in
+**Next month shows it too**, one month ahead:
+
+```
+  where this month ends    (balance + income still coming - bills not paid yet)
++ next month's income
+- next month's bills
+- the month after's budgeted expenses
+= projected end of next month
+```
+
+On the 1st, next month becomes the current month and the same math carries on
+with real balances, so the number doesn't jump if the month went to plan.
+
+Hover over the number to see the breakdown. Past months and months two or
+more ahead still show stock Actual's "Projected savings" / "Saved". The phone layout shows it too, in
 the top-left of the budget page.
 
 Code: `packages/desktop-client/src/components/budget/tracking/budgetsummary/ProjectedEndOfMonth.tsx`,

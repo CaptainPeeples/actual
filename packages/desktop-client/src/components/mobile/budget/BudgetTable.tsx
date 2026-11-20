@@ -19,7 +19,10 @@ import type {
 } from '@actual-app/core/types/models';
 import { AutoTextSize } from 'auto-text-size';
 
-import { useProjectedEndOfMonth } from '#components/budget/tracking/budgetsummary/ProjectedEndOfMonth';
+import {
+  showsProjectedEndOfMonth,
+  useProjectedEndOfMonth,
+} from '#components/budget/tracking/budgetsummary/ProjectedEndOfMonth';
 import { MOBILE_NAV_HEIGHT } from '#components/mobile/MobileNavTabs';
 import { PullToRefresh } from '#components/mobile/PullToRefresh';
 import { PrivacyFilter } from '#components/PrivacyFilter';
@@ -160,7 +163,8 @@ function ToBudget({ toBudget, onPress, show3Columns }: ToBudgetProps) {
   );
 }
 
-// Custom branch: mobile "Projected end of month" for the current month.
+// Custom branch: mobile "Projected end of month" for the current month
+// and next month.
 function ProjectedEndOfMonthMobile({
   month,
   onPress,
@@ -559,7 +563,7 @@ function BudgetTableHeader({
           alignItems: 'center',
         }}
       >
-        {budgetType === 'tracking' && month === monthUtils.currentMonth() ? (
+        {budgetType === 'tracking' && showsProjectedEndOfMonth(month) ? (
           <ProjectedEndOfMonthMobile
             month={month}
             onPress={onShowBudgetSummary}

@@ -21,6 +21,7 @@ import { t } from 'i18next';
 import { BalanceWithCarryover } from '#components/budget/BalanceWithCarryover';
 import { GoalStatus } from '#components/budget/GoalStatus';
 import {
+  categoryChecked,
   CHECK_COLUMN_WIDTH,
   CheckField,
   groupBillsPaid,
@@ -217,7 +218,7 @@ export const CategoryMonth = memo(function CategoryMonth({
   onBudgetAction,
   onShowActivity,
 }: CategoryMonthProps) {
-  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
+  const billPaid = categoryChecked(useBillStatus(month), category, month);
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef(null);
   const format = useFormat();

@@ -15,7 +15,7 @@ import * as monthUtils from '@actual-app/core/shared/months';
 import type { IntegerAmount } from '@actual-app/core/shared/util';
 import type { CategoryEntity } from '@actual-app/core/types/models';
 
-import { useBillStatus } from '#components/budget/paidBills';
+import { categoryChecked, useBillStatus } from '#components/budget/paidBills';
 import { useCategoriesById } from '#hooks/useCategories';
 import { useFormat } from '#hooks/useFormat';
 import { useNavigate } from '#hooks/useNavigate';
@@ -120,7 +120,7 @@ function ExpenseCategoryCells({
   onOpenBalanceMenu,
   onShowActivity,
 }: ExpenseCategoryCellsProps) {
-  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
+  const billPaid = categoryChecked(useBillStatus(month), category, month);
   const { t } = useTranslation();
   const columnWidth = getColumnWidth({
     show3Columns,

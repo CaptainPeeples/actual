@@ -16,6 +16,7 @@ import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
 import * as monthUtils from '@actual-app/core/shared/months';
 import { q } from '@actual-app/core/shared/query';
+import { weekIsOver } from '@actual-app/core/shared/weekly-categories';
 
 import { useQuery } from '#hooks/useQuery';
 
@@ -129,6 +130,21 @@ export function billStatus(
     if (linkedThisMonth.has(category) && !anyUnpaid) paid.add(category);
   }
   return { paid, hasBills, billCategories, owed };
+}
+
+// The ✓ on a category row: its bills are all paid, or it is a weekly
+// category ("Week N") whose week is already over. Display only: the week
+// part does not change any balance or the projected end of month.
+export function categoryChecked(
+  status: BillStatus | null,
+  category: { id: string; name: string },
+  month: string,
+  today: string = monthUtils.currentDay(),
+): boolean {
+  return (
+    (status?.paid.has(category.id) ?? false) ||
+    weekIsOver(category.name, month, today)
+  );
 }
 
 // True when a group has at least one bill and all of them are paid.

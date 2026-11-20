@@ -22,3 +22,14 @@ export function parseWeekName(
     ? { prefix: (match[1] ?? '').toLowerCase(), week: parseInt(match[2], 10) }
     : null;
 }
+
+// True when `name` is a weekly category whose week of `month` ("YYYY-MM") has
+// already ended as of `today` ("YYYY-MM-DD"). Every week of a past month is
+// over; no week of a future month is.
+export function weekIsOver(name: string, month: string, today: string) {
+  const parsed = parseWeekName(name);
+  if (!parsed) return false;
+  const current = today.slice(0, 7);
+  if (month !== current) return month < current;
+  return weekOfMonth(today) > parsed.week;
+}

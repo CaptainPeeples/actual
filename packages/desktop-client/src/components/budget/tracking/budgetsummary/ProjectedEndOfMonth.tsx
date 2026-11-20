@@ -30,10 +30,7 @@ import { Tooltip } from '@actual-app/components/tooltip';
 import { View } from '@actual-app/components/view';
 import { send } from '@actual-app/core/platform/client/connection';
 import * as monthUtils from '@actual-app/core/shared/months';
-import {
-  parseWeekName,
-  weekOfMonth,
-} from '@actual-app/core/shared/weekly-categories';
+import { weekIsOver } from '@actual-app/core/shared/weekly-categories';
 import { css } from '@emotion/css';
 
 import { billStatus, useBillData } from '#components/budget/paidBills';
@@ -52,16 +49,6 @@ type MonthCells = Array<{ name: string; value: string | number | boolean }>;
 function cellValue(cells: MonthCells, field: string): number {
   const cell = cells.find(c => c.name.endsWith('!' + field));
   return typeof cell?.value === 'number' ? cell.value : 0;
-}
-
-// True when `name` is a weekly category ("<Name> Week N") whose week of
-// `month` has already ended as of `today`.
-export function weekIsOver(name: string, month: string, today: string) {
-  const parsed = parseWeekName(name);
-  if (!parsed) return false;
-  const current = monthUtils.monthFromDate(today);
-  if (month !== current) return month < current;
-  return weekOfMonth(today) > parsed.week;
 }
 
 export function unpaidBills(

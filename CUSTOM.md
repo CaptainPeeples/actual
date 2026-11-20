@@ -153,6 +153,9 @@ Give each week its budget (for example, the monthly amount ÷ 4).
 - **Projected end of month** skips a week that is already over, since that
   money can't be spent anymore. Weeks still to come count as bills not paid
   yet.
+- **Checkmark:** a week that is over gets a ✓ in the check column (every
+  week of a past month, none of a future month). It's only for looks: it
+  doesn't change any balance, the group's ✓, or the projected end of month.
 
 Other categories work as usual. Renaming a category to or from `Week N` turns
 it on or off.

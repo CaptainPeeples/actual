@@ -1,4 +1,4 @@
-import { billStatus, groupBillsPaid } from './paidBills';
+import { billStatus, categoryChecked, groupBillsPaid } from './paidBills';
 
 const month = '2026-11';
 const setCategory = (value: string) => [
@@ -187,5 +187,40 @@ describe('groupBillsPaid', () => {
     expect(groupBillsPaid(status, ['mortgage', 'water'])).toBe(false);
     expect(groupBillsPaid(status, ['hoa'])).toBe(false);
     expect(groupBillsPaid(null, ['mortgage'])).toBe(false);
+  });
+});
+
+describe('categoryChecked', () => {
+  const empty = billStatus([], [], month);
+  const week = (n: number) => ({ id: `w${n}`, name: `Week ${n} (note)` });
+
+  it('checks weeks that are over this month, and only those', () => {
+    const today = '2026-11-20';
+    expect(categoryChecked(empty, week(1), month, today)).toBe(true);
+    expect(categoryChecked(empty, week(2), month, today)).toBe(true);
+    expect(categoryChecked(empty, week(3), month, today)).toBe(false);
+    expect(categoryChecked(empty, week(4), month, today)).toBe(false);
+  });
+
+  it('checks every week of a past month and none of a future one', () => {
+    expect(categoryChecked(empty, week(4), '2026-10', '2026-11-01')).toBe(true);
+    expect(categoryChecked(empty, week(1), '2026-12', '2026-11-30')).toBe(
+      false,
+    );
+  });
+
+  it('works for named weeks and leaves other categories alone', () => {
+    const today = '2026-11-08';
+    const gas = { id: 'g', name: 'Gas Week 1' };
+    const food = { id: 'f', name: 'Groceries' };
+    expect(categoryChecked(empty, gas, month, today)).toBe(true);
+    expect(categoryChecked(empty, food, month, today)).toBe(false);
+  });
+
+  it('does not count a finished week as a paid bill', () => {
+    const status = billStatus([], [], month);
+    categoryChecked(status, week(1), month, '2026-11-20');
+    expect(status.paid.size).toBe(0);
+    expect(groupBillsPaid(status, ['w1'])).toBe(false);
   });
 });

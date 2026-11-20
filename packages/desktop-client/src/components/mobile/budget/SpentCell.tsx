@@ -51,7 +51,7 @@ export function SpentCell({
   return (
     <CellValue<'envelope-budget' | 'tracking-budget', 'sum-amount'>
       binding={binding}
-      type="financial"
+      type="financial-no-decimals"
       aria-label={t('Spent amount for {{categoryName}} category', {
         categoryName: category.name,
       })}

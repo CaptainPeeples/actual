@@ -176,15 +176,21 @@ only for display.
 Code: `makeCreditStyle` and `withCreditSign` in
 `packages/desktop-client/src/components/budget/util.ts`
 
-### 9. ✓ on paid bills
+### 9. ✓ column, whole dollars, and short labels
 
-On the budget page, a bill category gets a **✓** once its bills due that
-month are paid (see "Bill categories hold only the bills still due" in
-section 3). A group gets a ✓ once every bill category in it is paid. Categories
-without bills don't affect the group's ✓. On the computer the ✓ sits at the
-right edge of the category column, lined up under its ⋮ menu (for this month,
-or the first month shown). On the phone it sits to the right of the Balance. The ✓ uses the normal text
-color.
+The budget page has a narrow **✓ column** between the category names and the
+Budget column, on the computer and the phone. A bill category gets a ✓ once
+its bills due that month are paid (see "Bill categories hold only the bills
+still due" in section 3), and a group gets a ✓ once every bill category in it
+is paid. Categories without bills don't affect the group's ✓. The ✓ uses the
+normal text color. On the phone the names column is 5% narrower to make room.
+
+Group and category numbers (Budget, Spent, Balance) show **whole dollars**,
+rounded to the nearest dollar (2,452.49 shows as 2,452). Typing a budget still
+takes cents, and the totals at the top keep their cents.
+
+Labels are shorter: **Budgeted** is now **Budget**, and **Projected end of
+month** is now **Projected**.
 
 Code: `packages/desktop-client/src/components/budget/paidBills.tsx`
 

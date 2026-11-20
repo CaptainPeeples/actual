@@ -26,7 +26,7 @@ import { useFormat } from '#hooks/useFormat';
 import { useSyncedPref } from '#hooks/useSyncedPref';
 import { envelopeBudget, trackingBudget } from '#spreadsheet/bindings';
 
-import { getColumnWidth, ROW_HEIGHT } from './BudgetTable';
+import { CheckCell, getColumnWidth, ROW_HEIGHT } from './BudgetTable';
 import { ExpenseCategoryList } from './ExpenseCategoryList';
 
 type ExpenseGroupListItemProps = ComponentPropsWithoutRef<
@@ -325,6 +325,7 @@ function ExpenseGroupCells({
         paddingRight: 5,
       }}
     >
+      <CheckCell paid={groupPaid} />
       <View
         style={{
           ...(!show3Columns && !showBudgetedColumn && { display: 'none' }),
@@ -332,7 +333,7 @@ function ExpenseGroupCells({
       >
         <CellValue<'envelope-budget' | 'tracking-budget', 'group-budget'>
           binding={budgeted}
-          type="financial"
+          type="financial-no-decimals"
         >
           {({ type, value }) => (
             <View>
@@ -359,7 +360,7 @@ function ExpenseGroupCells({
       >
         <CellValue<'envelope-budget' | 'tracking-budget', 'group-sum-amount'>
           binding={spent}
-          type="financial"
+          type="financial-no-decimals"
         >
           {({ type, value }) => (
             <View>
@@ -381,7 +382,7 @@ function ExpenseGroupCells({
       </View>
       <CellValue<'envelope-budget' | 'tracking-budget', 'group-leftover'>
         binding={balance}
-        type="financial"
+        type="financial-no-decimals"
       >
         {({ type, value }) => (
           <View>
@@ -401,9 +402,6 @@ function ExpenseGroupCells({
                 }}
               >
                 {format(value, type)}
-                {groupPaid && (
-                  <span style={{ color: theme.tableText }}> ✓</span>
-                )}
               </AutoTextSize>
             </PrivacyFilter>
           </View>

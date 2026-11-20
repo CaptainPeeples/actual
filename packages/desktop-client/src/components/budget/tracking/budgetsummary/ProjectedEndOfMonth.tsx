@@ -208,7 +208,7 @@ export function ProjectedEndOfMonth({
   return (
     <View style={{ alignItems: 'center', fontSize: 14, ...style }}>
       <Text style={{ color: theme.pageTextLight }}>
-        <Trans>Projected end of month:</Trans>
+        <Trans>Projected:</Trans>
       </Text>
       <Tooltip
         style={{ ...styles.tooltip, fontSize: 14, padding: 10 }}

@@ -52,12 +52,31 @@ export function getColumnWidth({
   isSidebar?: boolean;
   offset?: number;
 } = {}) {
-  // If show3Columns = 35vw | 20vw | 20vw | 20vw,
-  // Else = 45vw | 25vw | 25vw,
+  // If show3Columns = 30vw | 5vw | 20vw | 20vw | 20vw,
+  // Else = 40vw | 5vw | 25vw | 25vw,
+  // Custom branch: the 5vw is the ✓ column for paid bills (CHECK_COLUMN_WIDTH).
   if (!isSidebar) {
     return show3Columns ? `${20 + offset}vw` : `${25 + offset}vw`;
   }
-  return show3Columns ? `${35 + offset}vw` : `${45 + offset}vw`;
+  return show3Columns ? `${30 + offset}vw` : `${40 + offset}vw`;
+}
+
+// Custom branch: the ✓ column between the names and the Budget column.
+export const CHECK_COLUMN_WIDTH = '5vw';
+
+export function CheckCell({ paid }: { paid: boolean }) {
+  return (
+    <View
+      style={{
+        width: CHECK_COLUMN_WIDTH,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {paid && <Text style={{ color: theme.tableText, fontSize: 12 }}>✓</Text>}
+    </View>
+  );
 }
 
 type ToBudgetProps = {
@@ -172,7 +191,7 @@ function ProjectedEndOfMonthMobile({
             minFontSizePx={6}
             maxFontSizePx={12}
             mode="oneline"
-            title={t('Projected end of month')}
+            title={t('Projected')}
             style={{
               color: theme.formInputText,
               textAlign: 'left',
@@ -567,6 +586,7 @@ function BudgetTableHeader({
           alignItems: 'center',
         }}
       >
+        <CheckCell paid={false} />
         {(show3Columns || !showSpentColumn) && (
           <CellValue<'envelope-budget' | 'tracking-budget', 'total-budgeted'>
             binding={
@@ -605,7 +625,7 @@ function BudgetTableHeader({
                         minFontSizePx={8}
                         maxFontSizePx={12}
                         mode="multiline"
-                        title={t('Budgeted')}
+                        title={t('Budget')}
                         style={{ color: theme.formInputText, paddingRight: 4 }}
                       />
                     </View>

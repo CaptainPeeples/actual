@@ -208,35 +208,21 @@ export function MonthsPaidBillsProvider({ children }: { children: ReactNode }) {
   return <PaidBillsProvider months={months}>{children}</PaidBillsProvider>;
 }
 
-// Desktop: the month the category column's ✓ is for. The column is shared by
-// every month on screen, so it follows this month when it's shown, or else
-// the first month shown.
-function useSidebarBillStatus(): BillStatus | null {
-  const context = useContext(PaidBillsContext);
-  const { months } = useContext(MonthsContext);
-  if (!context || !months?.length) return null;
-  const current = monthUtils.currentMonth();
-  return context.get(months.includes(current) ? current : months[0]) ?? null;
-}
+// Desktop: the ✓ column at the start of each month, between the category
+// names and the Budget column.
+export const CHECK_COLUMN_WIDTH = 22;
 
-// A fixed-width spot at the right of the category column, lined up under
-// the column's ⋮ menu, that shows ✓ when the bills are paid.
-function PaidCheck({ paid }: { paid: boolean }) {
+export function CheckField({ paid }: { paid: boolean }) {
   return (
-    <View style={{ width: 21, flexShrink: 0, alignItems: 'center' }}>
+    <View
+      style={{
+        width: CHECK_COLUMN_WIDTH,
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       {paid && <Text style={{ color: theme.tableText }}>✓</Text>}
     </View>
   );
-}
-
-export function SidebarCategoryCheck({ categoryId }: { categoryId: string }) {
-  const status = useSidebarBillStatus();
-  if (!status) return null;
-  return <PaidCheck paid={status.paid.has(categoryId)} />;
-}
-
-export function SidebarGroupCheck({ categoryIds }: { categoryIds: string[] }) {
-  const status = useSidebarBillStatus();
-  if (!status) return null;
-  return <PaidCheck paid={groupBillsPaid(status, categoryIds)} />;
 }

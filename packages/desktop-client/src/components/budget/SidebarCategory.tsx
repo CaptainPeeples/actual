@@ -17,7 +17,6 @@ import { InputCell } from '#components/table';
 import { useContextMenu } from '#hooks/useContextMenu';
 import { useGlobalPref } from '#hooks/useGlobalPref';
 
-import { SidebarCategoryCheck } from './paidBills';
 import { SidebarCategoryButtons } from './SidebarCategoryButtons';
 
 type SidebarCategoryProps = {
@@ -119,7 +118,6 @@ export function SidebarCategory({
         dragging={dragging}
         goalsShown={goalsShown}
       />
-      {!dragPreview && <SidebarCategoryCheck categoryId={category.id} />}
     </View>
   );
 

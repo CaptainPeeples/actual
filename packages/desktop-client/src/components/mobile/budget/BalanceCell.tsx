@@ -29,8 +29,6 @@ type BalanceCellProps = {
   show3Columns?: boolean;
   onPress?: () => void;
   'aria-label'?: string;
-  // Custom branch: ✓ after the amount when the category's bills are paid
-  showCheck?: boolean;
 };
 
 export function BalanceCell({
@@ -39,7 +37,6 @@ export function BalanceCell({
   show3Columns,
   onPress,
   'aria-label': ariaLabel,
-  showCheck,
 }: BalanceCellProps) {
   const { t } = useTranslation();
   const [budgetType = 'envelope'] = useSyncedPref('budgetType');
@@ -74,7 +71,7 @@ export function BalanceCell({
       aria-label={t('Balance for {{categoryName}} category', {
         categoryName: category.name,
       })} // Translated aria-label
-      type="financial"
+      type="financial-no-decimals"
       carryover={carryover}
       balance={binding}
       goal={goal}
@@ -110,7 +107,6 @@ export function BalanceCell({
               )}
             >
               {format(value, type)}
-              {showCheck && <span style={{ color: theme.tableText }}> ✓</span>}
             </AutoTextSize>
           </PrivacyFilter>
         </Button>

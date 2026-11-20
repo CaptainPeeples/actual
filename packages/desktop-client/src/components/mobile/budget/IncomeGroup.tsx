@@ -78,7 +78,7 @@ export function IncomeGroup({
         }}
       >
         {budgetType === 'tracking' && (
-          <Label title={t('Budgeted')} style={{ width: columnWidth }} />
+          <Label title={t('Budget')} style={{ width: columnWidth }} />
         )}
         <Label title={t('Received')} style={{ width: columnWidth }} />
       </View>
@@ -264,7 +264,7 @@ function IncomeGroupCells({ group }: IncomeGroupCellsProps) {
       {budgeted && (
         <CellValue<'envelope-budget' | 'tracking-budget', 'group-budget'>
           binding={budgeted}
-          type="financial"
+          type="financial-no-decimals"
         >
           {({ type, value }) => (
             <View>
@@ -295,7 +295,7 @@ function IncomeGroupCells({ group }: IncomeGroupCellsProps) {
       )}
       <CellValue<'envelope-budget' | 'tracking-budget', 'group-sum-amount'>
         binding={balance}
-        type="financial"
+        type="financial-no-decimals"
       >
         {({ type, value }) => (
           <View>

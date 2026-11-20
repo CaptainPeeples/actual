@@ -28,7 +28,7 @@ import { envelopeBudget, trackingBudget } from '#spreadsheet/bindings';
 
 import { BalanceCell } from './BalanceCell';
 import { BudgetCell } from './BudgetCell';
-import { getColumnWidth, ROW_HEIGHT } from './BudgetTable';
+import { CheckCell, getColumnWidth, ROW_HEIGHT } from './BudgetTable';
 import { SpentCell } from './SpentCell';
 
 type ExpenseCategoryNameProps = {
@@ -151,6 +151,7 @@ function ExpenseCategoryCells({
         flexDirection: 'row',
       }}
     >
+      <CheckCell paid={billPaid} />
       <View
         style={{
           ...(!show3Columns && !showBudgetedColumn && { display: 'none' }),
@@ -161,7 +162,7 @@ function ExpenseCategoryCells({
       >
         <BudgetCell
           binding={budgeted}
-          type="financial"
+          type="financial-no-decimals"
           category={category}
           month={month}
           onBudgetAction={onBudgetAction}
@@ -194,7 +195,6 @@ function ExpenseCategoryCells({
           binding={balance}
           category={category}
           show3Columns={show3Columns}
-          showCheck={billPaid}
           onPress={onOpenBalanceMenu}
           aria-label={t('Open balance menu for {{categoryName}} category', {
             categoryName: category.name,

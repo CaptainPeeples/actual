@@ -20,6 +20,12 @@ import { t } from 'i18next';
 
 import { BalanceWithCarryover } from '#components/budget/BalanceWithCarryover';
 import { GoalStatus } from '#components/budget/GoalStatus';
+import {
+  CHECK_COLUMN_WIDTH,
+  CheckField,
+  groupBillsPaid,
+  useBillStatus,
+} from '#components/budget/paidBills';
 import { makeAmountGrey } from '#components/budget/util';
 import { NotesButton } from '#components/NotesButton';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
@@ -79,9 +85,10 @@ export const BudgetTotalsMonth = memo(function BudgetTotalsMonth() {
         paddingBottom: 10,
       }}
     >
+      <View style={{ width: CHECK_COLUMN_WIDTH, flexShrink: 0 }} />
       <View style={headerLabelStyle}>
         <Text style={{ color: theme.tableHeaderText }}>
-          <Trans>Budgeted</Trans>
+          <Trans>Budget</Trans>
         </Text>
         <TrackingCellValue
           binding={trackingBudget.totalBudgetedExpense}
@@ -122,9 +129,10 @@ export function IncomeHeaderMonth() {
         paddingBottom: 5,
       }}
     >
+      <View style={{ width: CHECK_COLUMN_WIDTH, flexShrink: 0 }} />
       <View style={headerLabelStyle}>
         <Text style={{ color: theme.tableHeaderText }}>
-          <Trans>Budgeted</Trans>
+          <Trans>Budget</Trans>
         </Text>
       </View>
       <View style={headerLabelStyle}>
@@ -141,6 +149,10 @@ export const GroupMonth = memo(function GroupMonth({
   group,
 }: CategoryGroupMonthProps) {
   const { id } = group;
+  const groupPaid = groupBillsPaid(
+    useBillStatus(month),
+    (group.categories ?? []).map(c => c.id),
+  );
 
   return (
     <View
@@ -152,6 +164,7 @@ export const GroupMonth = memo(function GroupMonth({
           : theme.budgetHeaderOtherMonth,
       }}
     >
+      <CheckField paid={groupPaid} />
       <TrackingSheetCell
         name="budgeted"
         width="flex"
@@ -159,7 +172,7 @@ export const GroupMonth = memo(function GroupMonth({
         style={{ fontWeight: 600, ...styles.tnum }}
         valueProps={{
           binding: trackingBudget.groupBudgeted(id),
-          type: 'financial',
+          type: 'financial-no-decimals',
         }}
       />
       <TrackingSheetCell
@@ -169,7 +182,7 @@ export const GroupMonth = memo(function GroupMonth({
         style={{ fontWeight: 600, ...styles.tnum }}
         valueProps={{
           binding: trackingBudget.groupSumAmount(id),
-          type: 'financial',
+          type: 'financial-no-decimals',
         }}
       />
       {!group.is_income && (
@@ -184,7 +197,7 @@ export const GroupMonth = memo(function GroupMonth({
           }}
           valueProps={{
             binding: trackingBudget.groupBalance(id),
-            type: 'financial',
+            type: 'financial-no-decimals',
             getValueStyle: value =>
               typeof value === 'number' && value < 0
                 ? { color: theme.budgetBalanceNegative }
@@ -204,6 +217,7 @@ export const CategoryMonth = memo(function CategoryMonth({
   onBudgetAction,
   onShowActivity,
 }: CategoryMonthProps) {
+  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef(null);
   const format = useFormat();
@@ -256,6 +270,7 @@ export const CategoryMonth = memo(function CategoryMonth({
         },
       }}
     >
+      <CheckField paid={billPaid} />
       <View
         style={{
           flex: 1,
@@ -382,7 +397,7 @@ export const CategoryMonth = memo(function CategoryMonth({
           }}
           valueProps={{
             binding: trackingBudget.catBudgeted(category.id),
-            type: 'financial',
+            type: 'financial-no-decimals',
             getValueStyle: makeAmountGrey,
             formatExpr: format.forEdit,
             unformatExpr: format.fromEdit,
@@ -444,7 +459,7 @@ export const CategoryMonth = memo(function CategoryMonth({
           )}
           <TrackingCellValue
             binding={trackingBudget.catSumAmount(category.id)}
-            type="financial"
+            type="financial-no-decimals"
           >
             {props => (
               <CellValueText
@@ -480,6 +495,7 @@ export const CategoryMonth = memo(function CategoryMonth({
             }}
           >
             <BalanceWithCarryover
+              type="financial-no-decimals"
               isDisabled={category.is_income}
               carryover={trackingBudget.catCarryover(category.id)}
               balance={trackingBudget.catBalance(category.id)}

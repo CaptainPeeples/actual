@@ -20,7 +20,6 @@ import { t } from 'i18next';
 
 import { BalanceWithCarryover } from '#components/budget/BalanceWithCarryover';
 import { GoalStatus } from '#components/budget/GoalStatus';
-import { groupBillsPaid, useBillStatus } from '#components/budget/paidBills';
 import { makeAmountGrey } from '#components/budget/util';
 import { NotesButton } from '#components/NotesButton';
 import { CellValue, CellValueText } from '#components/spreadsheet/CellValue';
@@ -142,11 +141,6 @@ export const GroupMonth = memo(function GroupMonth({
   group,
 }: CategoryGroupMonthProps) {
   const { id } = group;
-  const format = useFormat();
-  const groupPaid = groupBillsPaid(
-    useBillStatus(month),
-    (group.categories ?? []).map(c => c.id),
-  );
 
   return (
     <View
@@ -188,16 +182,6 @@ export const GroupMonth = memo(function GroupMonth({
             paddingRight: styles.monthRightPadding,
             ...styles.tnum,
           }}
-          formatter={value =>
-            groupPaid ? (
-              <>
-                {format(value, 'financial')}
-                <span style={{ color: theme.tableText }}> ✓</span>
-              </>
-            ) : (
-              format(value, 'financial')
-            )
-          }
           valueProps={{
             binding: trackingBudget.groupBalance(id),
             type: 'financial',
@@ -220,7 +204,6 @@ export const CategoryMonth = memo(function CategoryMonth({
   onBudgetAction,
   onShowActivity,
 }: CategoryMonthProps) {
-  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
   const triggerRef = useRef(null);
   const format = useFormat();
@@ -504,9 +487,6 @@ export const CategoryMonth = memo(function CategoryMonth({
               budgeted={trackingBudget.catBudgeted(category.id)}
               longGoal={trackingBudget.catLongGoal(category.id)}
             />
-            {billPaid && (
-              <Text style={{ marginLeft: 4, color: theme.tableText }}>✓</Text>
-            )}
           </Button>
 
           <Popover

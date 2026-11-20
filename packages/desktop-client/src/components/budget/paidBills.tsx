@@ -11,6 +11,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 
+import { Text } from '@actual-app/components/text';
+import { theme } from '@actual-app/components/theme';
+import { View } from '@actual-app/components/view';
 import * as monthUtils from '@actual-app/core/shared/months';
 import { q } from '@actual-app/core/shared/query';
 
@@ -203,4 +206,37 @@ export function useBillStatus(month: string): BillStatus | null {
 export function MonthsPaidBillsProvider({ children }: { children: ReactNode }) {
   const { months } = useContext(MonthsContext);
   return <PaidBillsProvider months={months}>{children}</PaidBillsProvider>;
+}
+
+// Desktop: the month the category column's ✓ is for. The column is shared by
+// every month on screen, so it follows this month when it's shown, or else
+// the first month shown.
+function useSidebarBillStatus(): BillStatus | null {
+  const context = useContext(PaidBillsContext);
+  const { months } = useContext(MonthsContext);
+  if (!context || !months?.length) return null;
+  const current = monthUtils.currentMonth();
+  return context.get(months.includes(current) ? current : months[0]) ?? null;
+}
+
+// A fixed-width spot at the right of the category column, lined up under
+// the column's ⋮ menu, that shows ✓ when the bills are paid.
+function PaidCheck({ paid }: { paid: boolean }) {
+  return (
+    <View style={{ width: 21, flexShrink: 0, alignItems: 'center' }}>
+      {paid && <Text style={{ color: theme.tableText }}>✓</Text>}
+    </View>
+  );
+}
+
+export function SidebarCategoryCheck({ categoryId }: { categoryId: string }) {
+  const status = useSidebarBillStatus();
+  if (!status) return null;
+  return <PaidCheck paid={status.paid.has(categoryId)} />;
+}
+
+export function SidebarGroupCheck({ categoryIds }: { categoryIds: string[] }) {
+  const status = useSidebarBillStatus();
+  if (!status) return null;
+  return <PaidCheck paid={groupBillsPaid(status, categoryIds)} />;
 }

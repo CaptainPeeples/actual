@@ -23,6 +23,8 @@ import { useContextMenu } from '#hooks/useContextMenu';
 import { useFeatureFlag } from '#hooks/useFeatureFlag';
 import { useGlobalPref } from '#hooks/useGlobalPref';
 
+import { SidebarGroupCheck } from './paidBills';
+
 type SidebarGroupProps = {
   group: CategoryGroupEntity;
   editing?: boolean;
@@ -190,6 +192,9 @@ export function SidebarGroup({
 
             <NotesButton id={group.id} defaultColor={theme.pageTextLight} />
           </View>
+          <SidebarGroupCheck
+            categoryIds={(group.categories ?? []).map(c => c.id)}
+          />
         </>
       )}
     </View>

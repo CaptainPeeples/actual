@@ -156,7 +156,6 @@ export function ExpenseGroupHeader({
     >
       <ExpenseGroupName
         group={categoryGroup}
-        month={month}
         onEditCategoryGroup={onEditCategoryGroup}
         isCollapsed={isCollapsed}
         onToggleCollapse={onToggleCollapse}
@@ -164,6 +163,7 @@ export function ExpenseGroupHeader({
       />
       <ExpenseGroupCells
         group={categoryGroup}
+        month={month}
         show3Columns={show3Columns}
         showBudgetedColumn={showBudgetedColumn}
       />
@@ -173,7 +173,6 @@ export function ExpenseGroupHeader({
 
 type ExpenseGroupNameProps = {
   group: CategoryGroupEntity;
-  month: string;
   onEditCategoryGroup: (id: CategoryGroupEntity['id']) => void;
   isCollapsed: (id: CategoryGroupEntity['id']) => boolean;
   onToggleCollapse: (id: CategoryGroupEntity['id']) => void;
@@ -182,7 +181,6 @@ type ExpenseGroupNameProps = {
 
 function ExpenseGroupName({
   group,
-  month,
   onEditCategoryGroup,
   isCollapsed,
   onToggleCollapse,
@@ -193,10 +191,6 @@ function ExpenseGroupName({
     isSidebar: true,
     offset: -3.5,
   });
-  const groupPaid = groupBillsPaid(
-    useBillStatus(month),
-    (group.categories ?? []).map(c => c.id),
-  );
   return (
     <View
       style={{
@@ -264,7 +258,6 @@ function ExpenseGroupName({
             data-testid="category-group-name"
           >
             {group.name}
-            {groupPaid && ' ✓'}
           </Text>
           <SvgCheveronRight
             style={{ flexShrink: 0, color: theme.tableTextSubdued }}
@@ -279,15 +272,21 @@ function ExpenseGroupName({
 
 type ExpenseGroupCellsProps = {
   group: CategoryGroupEntity;
+  month: string;
   show3Columns: boolean;
   showBudgetedColumn: boolean;
 };
 
 function ExpenseGroupCells({
   group,
+  month,
   show3Columns,
   showBudgetedColumn,
 }: ExpenseGroupCellsProps) {
+  const groupPaid = groupBillsPaid(
+    useBillStatus(month),
+    (group.categories ?? []).map(c => c.id),
+  );
   const [budgetType = 'envelope'] = useSyncedPref('budgetType');
   const format = useFormat();
 
@@ -402,6 +401,9 @@ function ExpenseGroupCells({
                 }}
               >
                 {format(value, type)}
+                {groupPaid && (
+                  <span style={{ color: theme.tableText }}> ✓</span>
+                )}
               </AutoTextSize>
             </PrivacyFilter>
           </View>

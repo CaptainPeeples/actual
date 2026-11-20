@@ -33,14 +33,12 @@ import { SpentCell } from './SpentCell';
 
 type ExpenseCategoryNameProps = {
   category: CategoryEntity;
-  month: string;
   onEditCategory: (id: CategoryEntity['id']) => void;
   show3Columns: boolean;
 };
 
 function ExpenseCategoryName({
   category,
-  month,
   onEditCategory,
   show3Columns,
 }: ExpenseCategoryNameProps) {
@@ -48,8 +46,6 @@ function ExpenseCategoryName({
     show3Columns,
     isSidebar: true,
   });
-  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
-
   return (
     <View
       style={{
@@ -93,7 +89,6 @@ function ExpenseCategoryName({
             data-testid="category-name"
           >
             {category.name}
-            {billPaid && ' ✓'}
           </Text>
           <SvgCheveronRight
             style={{ flexShrink: 0, color: theme.tableTextSubdued }}
@@ -125,6 +120,7 @@ function ExpenseCategoryCells({
   onOpenBalanceMenu,
   onShowActivity,
 }: ExpenseCategoryCellsProps) {
+  const billPaid = useBillStatus(month)?.paid.has(category.id) ?? false;
   const { t } = useTranslation();
   const columnWidth = getColumnWidth({
     show3Columns,
@@ -198,6 +194,7 @@ function ExpenseCategoryCells({
           binding={balance}
           category={category}
           show3Columns={show3Columns}
+          showCheck={billPaid}
           onPress={onOpenBalanceMenu}
           aria-label={t('Open balance menu for {{categoryName}} category', {
             categoryName: category.name,
@@ -476,7 +473,6 @@ export function ExpenseCategoryListItem({
       >
         <ExpenseCategoryName
           category={category}
-          month={month}
           onEditCategory={onEditCategory}
           show3Columns={show3Columns}
         />

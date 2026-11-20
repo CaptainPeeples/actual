@@ -173,11 +173,6 @@ export const GroupMonth = memo(function GroupMonth({
         width="flex"
         textAlign="right"
         style={{ fontWeight: 600, ...styles.tnum }}
-        formatter={value =>
-          groupPaid
-            ? '✓ ' + format(value, 'financial')
-            : format(value, 'financial')
-        }
         valueProps={{
           binding: trackingBudget.groupSumAmount(id),
           type: 'financial',
@@ -193,6 +188,16 @@ export const GroupMonth = memo(function GroupMonth({
             paddingRight: styles.monthRightPadding,
             ...styles.tnum,
           }}
+          formatter={value =>
+            groupPaid ? (
+              <>
+                {format(value, 'financial')}
+                <span style={{ color: theme.tableText }}> ✓</span>
+              </>
+            ) : (
+              format(value, 'financial')
+            )
+          }
           valueProps={{
             binding: trackingBudget.groupBalance(id),
             type: 'financial',
@@ -468,9 +473,6 @@ export const CategoryMonth = memo(function CategoryMonth({
                   },
                   ...makeAmountGrey(props.value),
                 })}
-                formatter={(value, type) =>
-                  billPaid ? '✓ ' + format(value, type) : format(value, type)
-                }
               />
             )}
           </TrackingCellValue>
@@ -502,6 +504,9 @@ export const CategoryMonth = memo(function CategoryMonth({
               budgeted={trackingBudget.catBudgeted(category.id)}
               longGoal={trackingBudget.catLongGoal(category.id)}
             />
+            {billPaid && (
+              <Text style={{ marginLeft: 4, color: theme.tableText }}>✓</Text>
+            )}
           </Button>
 
           <Popover

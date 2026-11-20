@@ -181,8 +181,8 @@ Code: `makeCreditStyle` and `withCreditSign` in
 On the budget page, a bill category gets a **✓** once its bills due that
 month are paid (see "Bill categories hold only the bills still due" in
 section 3). A group gets a ✓ once every bill category in it is paid. Categories
-without bills don't affect the group's ✓. On the computer the ✓ is in the
-Spent column; on the phone it's after the name. The ✓ uses the normal text
+without bills don't affect the group's ✓. The ✓ sits to the right of the
+Balance number, on the computer and the phone. The ✓ uses the normal text
 color.
 
 Code: `packages/desktop-client/src/components/budget/paidBills.tsx`

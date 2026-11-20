@@ -235,7 +235,7 @@ export function ProjectedEndOfMonth({
         >
           <PrivacyFilter>
             <FinancialText>
-              {parts ? format(projected, 'financial') : '…'}
+              {parts ? format(projected, 'financial-dollars') : '…'}
             </FinancialText>
           </PrivacyFilter>
         </View>

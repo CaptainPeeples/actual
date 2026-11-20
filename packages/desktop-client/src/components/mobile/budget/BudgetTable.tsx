@@ -216,7 +216,7 @@ function ProjectedEndOfMonthMobile({
                     : theme.templateNumberFunded,
               }}
             >
-              {parts ? format(projected, 'financial') : '…'}
+              {parts ? format(projected, 'financial-dollars') : '…'}
             </AutoTextSize>
           </PrivacyFilter>
         </View>

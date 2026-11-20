@@ -187,7 +187,8 @@ normal text color. On the phone the names column is 5% narrower to make room.
 
 Group and category numbers (Budget, Spent, Balance) show **whole dollars with a
 $ sign**, rounded to the nearest dollar (2,452.49 shows as $2,452; −2,452.49
-shows as -$2,452). This uses a new number format, `financial-dollars`; if a
+shows as -$2,452). The **Projected** number (computer and phone) uses the same
+format, so 810.16 shows as $810. This uses a new number format, `financial-dollars`; if a
 currency is set in Settings, its own symbol is used instead of $. Typing a budget still
 takes cents, and the totals at the top keep their cents.
 

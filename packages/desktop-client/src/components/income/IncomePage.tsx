@@ -178,14 +178,49 @@ export function StatusBadge({ status }: { status: PaycheckResult['status'] }) {
   );
 }
 
+// Row counts to pad each card to, so checks side by side line up.
+type CardRows = { pay: number; pretax: number; taxes: number; posttax: number };
+
+function payRows(c: PaycheckResult) {
+  return c.hourPay.length + (c.extraPay !== 0 ? 1 : 0);
+}
+function extraTaxRows(c: PaycheckResult) {
+  return (c.taxes.local !== 0 ? 1 : 0) + c.taxes.other.length;
+}
+
+function cardRows(checks: PaycheckResult[]): CardRows {
+  const max = (f: (c: PaycheckResult) => number) =>
+    checks.reduce((m, c) => Math.max(m, f(c)), 0);
+  return {
+    pay: max(payRows),
+    pretax: max(c => c.pretax.length),
+    taxes: max(extraTaxRows),
+    posttax: max(c => c.posttax.length),
+  };
+}
+
+function Blanks({ count }: { count: number }) {
+  return (
+    <>
+      {Array.from({ length: Math.max(0, count) }, (_, i) => (
+        <Text key={i} aria-hidden>
+          {'\u00a0'}
+        </Text>
+      ))}
+    </>
+  );
+}
+
 function CheckCard({
   check,
   title,
   stateName,
+  rows,
 }: {
   check: PaycheckResult;
   title: string;
   stateName: string | null;
+  rows: CardRows;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -220,9 +255,10 @@ function CheckCard({
         {check.extraPay !== 0 && (
           <Line label={t('Extra pay')} value={check.extraPay} />
         )}
+        <Blanks count={rows.pay - payRows(check)} />
         <Line label={t('Gross pay')} value={check.gross} bold />
 
-        {check.pretax.length > 0 && (
+        {rows.pretax > 0 && (
           <>
             <SectionLabel total={check.pretaxTotal}>
               <Trans>Before taxes</Trans>
@@ -230,6 +266,7 @@ function CheckCard({
             {check.pretax.map(l => (
               <Line key={l.id} label={l.name} value={l.amount} />
             ))}
+            <Blanks count={rows.pretax - check.pretax.length} />
           </>
         )}
 
@@ -250,8 +287,9 @@ function CheckCard({
         {check.taxes.other.map(l => (
           <Line key={l.id} label={l.name} value={l.amount} />
         ))}
+        <Blanks count={rows.taxes - extraTaxRows(check)} />
 
-        {check.posttax.length > 0 && (
+        {rows.posttax > 0 && (
           <>
             <SectionLabel total={check.posttaxTotal}>
               <Trans>After taxes</Trans>
@@ -259,6 +297,7 @@ function CheckCard({
             {check.posttax.map(l => (
               <Line key={l.id} label={l.name} value={l.amount} />
             ))}
+            <Blanks count={rows.posttax - check.posttax.length} />
           </>
         )}
 
@@ -473,7 +512,7 @@ function MonthNav({
       </Button>
       {month !== current && (
         <Button variant="bare" onPress={() => onChange(current)}>
-          <Trans>This month</Trans>
+          <Trans>Current month</Trans>
         </Button>
       )}
     </View>
@@ -490,6 +529,7 @@ export function IncomePage() {
 
   const yearChecks = useMemo(() => computeYear(year, config), [year, config]);
   const checks = yearChecks.filter(c => c.date.startsWith(month));
+  const rows = cardRows(checks);
   const totals = yearTotals(yearChecks);
   const monthNet = checks.reduce((s, c) => s + c.net, 0);
   const state = stateInfo(tax, taxYearFor(year));
@@ -550,6 +590,7 @@ export function IncomePage() {
                     check={c}
                     title={titleOf(c)}
                     stateName={stateName}
+                    rows={rows}
                   />
                 ))}
               </View>

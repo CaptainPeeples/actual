@@ -759,3 +759,32 @@ describe('per diem on real checks', () => {
     );
   });
 });
+
+describe('per diem on real checks (taxed)', () => {
+  it('does not add an estimated untaxed per diem to a real check', () => {
+    const checks = computeYear(2026, {
+      income: income({
+        perDiem: {
+          enabled: true,
+          rate: 2,
+          hours: 10,
+          checks: 'all',
+          taxed: false,
+        },
+      }),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {
+        '2026': {
+          checks: {
+            '2026-01-01': {
+              actual: { gross: 4020, net: 3300, taxedPerDiem: 20 },
+            },
+          },
+        },
+      },
+    });
+    expect(checks[0].perDiem).toBe(0);
+    expect(checks[0].hourPay.find(l => l.id === PER_DIEM_ID)?.amount).toBe(20);
+  });
+});

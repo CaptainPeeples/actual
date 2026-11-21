@@ -365,8 +365,9 @@ export function computeCheck(input: CheckInput): PaycheckResult {
   let taxedPerDiem = perDiemTaxed;
   let untaxedPerDiem = perDiem;
   if (actual) {
-    taxedPerDiem = actual.taxedPerDiem ?? (pd?.taxed ? perDiemTaxed : 0);
-    untaxedPerDiem = actual.perDiem ?? perDiem;
+    // A real stub: per diem is only what the stub says.
+    taxedPerDiem = actual.taxedPerDiem ?? 0;
+    untaxedPerDiem = actual.perDiem ?? 0;
   }
   if (
     taxedPerDiem !== 0 ||

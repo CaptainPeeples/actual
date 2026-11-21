@@ -1,3 +1,5 @@
+import type { RuleEntity } from '#types/models';
+
 import {
   computeCheck,
   computeYear,
@@ -5,11 +7,14 @@ import {
   defaultTaxSettings,
   EMPTY_YTD,
   federalWithholding,
+  hasFixedSplits,
   hoursKey,
   payDatesInYear,
   PER_DIEM_ID,
   rateOn,
+  splitRuleCategories,
   stateWithholding,
+  syncSplitRule,
   taxYearFor,
 } from './paycheck';
 import type { Deduction, IncomeSettings, TaxSettings } from './types';
@@ -665,5 +670,62 @@ describe('split leftovers', () => {
     expect(split.find(l => l.id === 'reg')?.amount).toBe(
       Number((plain.net - 10).toFixed(2)),
     );
+  });
+});
+
+describe('split rule sync', () => {
+  const rule = {
+    id: 'r',
+    stage: null,
+    conditionsOp: 'and',
+    conditions: [],
+    actions: [
+      {
+        op: 'set',
+        field: 'category',
+        value: 'base',
+        options: { splitIndex: 1 },
+      },
+      {
+        op: 'set-split-amount',
+        value: 400000,
+        options: { splitIndex: 1, method: 'fixed-amount' },
+      },
+      {
+        op: 'set',
+        field: 'category',
+        value: 'extra',
+        options: { splitIndex: 2 },
+      },
+      {
+        op: 'set-split-amount',
+        value: 300000,
+        options: { splitIndex: 2, method: 'fixed-amount' },
+      },
+      {
+        op: 'set',
+        field: 'category',
+        value: 'rest',
+        options: { splitIndex: 3 },
+      },
+      {
+        op: 'set-split-amount',
+        value: null,
+        options: { splitIndex: 3, method: 'remainder' },
+      },
+    ],
+  } as unknown as RuleEntity;
+
+  it('sets fixed amounts from the plan and leaves the rest alone', () => {
+    const next = syncSplitRule(rule, { base: 4510.37, rest: 999 });
+    expect(next?.actions[1]).toMatchObject({ value: 451037 });
+    expect(next?.actions[3]).toMatchObject({ value: 300000 });
+    expect(next?.actions[5]).toMatchObject({ value: null });
+    expect(splitRuleCategories(rule)).toEqual(['base', 'extra', 'rest']);
+    expect(hasFixedSplits(rule)).toBe(true);
+  });
+
+  it('returns null when nothing changes', () => {
+    expect(syncSplitRule(rule, { base: 4000, extra: 3000 })).toBeNull();
   });
 });

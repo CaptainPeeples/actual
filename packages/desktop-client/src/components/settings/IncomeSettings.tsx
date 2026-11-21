@@ -1,10 +1,15 @@
 // Custom branch: Settings → Income. Pay rate, pay schedule, hours, and
 // other income used by the Income page.
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Select } from '@actual-app/components/select';
 import { View } from '@actual-app/components/view';
+import { send } from '@actual-app/core/platform/client/connection';
+import {
+  hasFixedSplits,
+  splitRuleCategories,
+} from '@actual-app/core/shared/paycheck/paycheck';
 import type {
   HourLine,
   ImputedLine,
@@ -12,6 +17,7 @@ import type {
   PayFrequency,
   PerDiem,
 } from '@actual-app/core/shared/paycheck/types';
+import type { RuleEntity } from '@actual-app/core/types/models';
 
 import { Checkbox } from '#components/forms';
 import {
@@ -26,6 +32,7 @@ import {
   TextField,
 } from '#components/income/fields';
 import { usePaycheckConfig } from '#components/income/usePaycheckConfig';
+import { useCategories } from '#hooks/useCategories';
 
 import { SettingsGroup } from './SettingsGroup';
 import { SettingsRow } from './SettingsRow';
@@ -84,6 +91,22 @@ export function IncomePaySettings() {
     update({
       imputed: income.imputed.map(l => (l.id === id ? { ...l, ...patch } : l)),
     });
+
+  const { data: categories } = useCategories();
+  const categoryName = (id: string) =>
+    categories?.list.find(c => c.id === id)?.name ?? id;
+  const [splitRules, setSplitRules] = useState<RuleEntity[]>([]);
+  useEffect(() => {
+    let active = true;
+    void send('rules-get').then(rules => {
+      if (active) {
+        setSplitRules(rules.filter(hasFixedSplits));
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const perDiem: PerDiem = income.perDiem ?? {
     enabled: false,
@@ -393,6 +416,40 @@ export function IncomePaySettings() {
         >
           <Trans>Add a line</Trans>
         </AddButton>
+      </SettingsGroup>
+
+      <SettingsGroup
+        title={t('Paycheck split rule')}
+        description={
+          <Trans>
+            If a rule splits your paycheck deposit into income categories with
+            fixed amounts, pick it here. When you look at the current month on
+            the Income page, its fixed amounts are set to that month's planned
+            amounts. The "rest" split is left alone.
+          </Trans>
+        }
+      >
+        <SettingsRow
+          title={t('Rule')}
+          control={
+            <Select
+              value={income.splitRuleId ?? ''}
+              onChange={id => update({ splitRuleId: id || undefined })}
+              options={[
+                ['', t('None')],
+                ...splitRules.map(
+                  r =>
+                    [
+                      r.id,
+                      splitRuleCategories(r)
+                        .map(id => categoryName(id))
+                        .join(' / '),
+                    ] as [string, string],
+                ),
+              ]}
+            />
+          }
+        />
       </SettingsGroup>
 
       <SettingsGroup title={t('Other income')}>

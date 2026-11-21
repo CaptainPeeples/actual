@@ -53,6 +53,9 @@ export type IncomeSettings = {
   // Income category for each payday (or 'all' / 'other') used by the
   // Income page's "Put in budget" button.
   budgetCategories?: Record<string, string>;
+  // A rule that splits paycheck deposits. Its fixed split amounts are kept
+  // in step with the current month's planned amounts.
+  splitRuleId?: string;
 };
 
 export type W4 = {

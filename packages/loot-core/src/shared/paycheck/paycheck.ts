@@ -3,6 +3,8 @@
 // and Medicare with yearly caps, state withholding, local, and other
 // employee taxes. Year-to-date totals come from the year's checks in order,
 // so caps reset on the first check of each year (by pay date).
+import type { RuleEntity } from '#types/models';
+
 import { FEDERAL_2026 } from './federal-2026';
 import { STATE_WITHHOLDING_2026 } from './states-2026';
 import { PERIODS_PER_YEAR } from './types';
@@ -761,4 +763,60 @@ export function yearTotals(checks: PaycheckResult[]): YearTotals {
     posttax: sum(checks.map(c => c.posttaxTotal)),
     net: sum(checks.map(c => c.net)),
   };
+}
+
+// ---- Paycheck split rule ----
+
+// Updates a split rule's fixed amounts so each split's category gets the
+// given amount (dollars, by category id). Splits whose category isn't in
+// `amounts`, and "remainder"/percent splits, are left alone. Returns the
+// changed rule, or null if nothing changed.
+export function syncSplitRule(
+  rule: RuleEntity,
+  amounts: Record<string, number>,
+): RuleEntity | null {
+  const categoryBySplit = new Map<number, string>();
+  for (const a of rule.actions) {
+    if (a.op === 'set' && a.field === 'category' && a.options?.splitIndex) {
+      categoryBySplit.set(a.options.splitIndex, String(a.value));
+    }
+  }
+  let changed = false;
+  const actions = rule.actions.map(a => {
+    if (a.op !== 'set-split-amount' || a.options?.method !== 'fixed-amount') {
+      return a;
+    }
+    const category = categoryBySplit.get(a.options.splitIndex ?? 0);
+    const amount = category != null ? amounts[category] : undefined;
+    if (amount == null) {
+      return a;
+    }
+    const value = Math.round(amount * 100);
+    if (value === a.value) {
+      return a;
+    }
+    changed = true;
+    return { ...a, value };
+  });
+  return changed ? { ...rule, actions } : null;
+}
+
+// Categories a rule splits into (in split order), for showing in Settings.
+export function splitRuleCategories(rule: RuleEntity): string[] {
+  return rule.actions
+    .filter(
+      a => a.op === 'set' && a.field === 'category' && a.options?.splitIndex,
+    )
+    .sort(
+      (a, b) =>
+        ((a.options as { splitIndex?: number })?.splitIndex ?? 0) -
+        ((b.options as { splitIndex?: number })?.splitIndex ?? 0),
+    )
+    .map(a => String((a as { value: unknown }).value));
+}
+
+export function hasFixedSplits(rule: RuleEntity): boolean {
+  return rule.actions.some(
+    a => a.op === 'set-split-amount' && a.options?.method === 'fixed-amount',
+  );
 }

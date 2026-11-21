@@ -289,6 +289,15 @@ what it adds; then per diem, then bonus). Pick an income category for each
 and press "Add to <Month>'s budget". It sets that month's budget for those
 categories only (as an "Only this month" change), and Undo takes it back.
 
+**Match budget to deposits** (this month and earlier): sets every income
+category's budget to what was actually received that month.
+
+**Paycheck split rule** (Settings → Income): pick a rule that splits paycheck
+deposits with fixed amounts. While the Income page shows the current month,
+the rule's fixed split amounts are kept equal to that month's planned
+amounts for their categories (the last check in the month using each category
+wins). "Rest" and percent splits are left alone.
+
 Settings are saved as synced preferences (`income-settings`, `income-taxes`,
 `income-deductions`, `income-history`). Nothing else in the budget changes.
 

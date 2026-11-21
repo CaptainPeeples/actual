@@ -1,7 +1,7 @@
 // Custom branch: the Income page. Shows each paycheck for a month (gross,
 // pre-tax, taxes, after-tax, net), the month's total, the year's totals,
 // and a button that puts the month's net pay into income categories.
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -27,6 +27,7 @@ import {
   PER_DIEM_ID,
   rateOn,
   stateInfo,
+  syncSplitRule,
   taxYearFor,
   yearTotals,
 } from '@actual-app/core/shared/paycheck/paycheck';
@@ -442,6 +443,91 @@ function PutInBudget({
     );
   };
 
+  // Planned amount per category for the rule that splits paycheck deposits:
+  // the last check in the month that uses that category wins.
+  const rulePlan: Record<string, number> = {};
+  for (const c of checks) {
+    const perCheck: Record<string, number> = {};
+    for (const line of c.netSplit) {
+      const category = chosen[`${keyOf(c)}:${line.id}`];
+      if (category) {
+        perCheck[category] = (perCheck[category] ?? 0) + line.amount;
+      }
+    }
+    Object.assign(rulePlan, perCheck);
+  }
+  const rulePlanKey = JSON.stringify(rulePlan);
+  const isCurrentMonth = month === monthUtils.currentMonth();
+  const [ruleNote, setRuleNote] = useState<string | null>(null);
+
+  // Keep the paycheck split rule in step with this month's plan, so new
+  // deposits split the same way. Only for the current month, so planning
+  // ahead doesn't change how this month's deposits split.
+  useEffect(() => {
+    if (!isCurrentMonth || !income.splitRuleId || rulePlanKey === '{}') {
+      setRuleNote(null);
+      return;
+    }
+    let active = true;
+    void (async () => {
+      const rules = await send('rules-get');
+      const rule = rules.find(r => r.id === income.splitRuleId);
+      if (!rule) {
+        if (active) setRuleNote(t('The paycheck split rule was not found.'));
+        return;
+      }
+      const next = syncSplitRule(rule, JSON.parse(rulePlanKey));
+      if (next) {
+        await send('rule-update', next);
+      }
+      if (active) {
+        setRuleNote(
+          next
+            ? t('Paycheck split rule updated to this month.')
+            : t('Paycheck split rule matches this month.'),
+        );
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [isCurrentMonth, income.splitRuleId, rulePlanKey, t]);
+
+  // Set every income budget this month to what was actually received.
+  const matchDeposits = async () => {
+    const result = await send('api/budget-month', { month });
+    const group = result.categoryGroups.find(g => g.is_income);
+    let changed = 0;
+    for (const c of group?.categories ?? []) {
+      const cat = c as {
+        id: string;
+        hidden?: boolean;
+        budgeted?: number;
+        received?: number;
+      };
+      if (cat.hidden || cat.budgeted === cat.received) {
+        continue;
+      }
+      await send('budget/budget-amount-only-this-month', {
+        month,
+        category: cat.id,
+        amount: cat.received ?? 0,
+      });
+      changed++;
+    }
+    setStatus(
+      changed
+        ? t(
+            'Done. Income budget for {{month}} now matches what was received.',
+            {
+              month: monthUtils.format(month, 'MMMM yyyy', locale),
+            },
+          )
+        : t('Already matches what was received.'),
+    );
+  };
+  const canMatch = month <= monthUtils.currentMonth();
+
   const options: Array<[string, string]> = [
     ['', t('Leave out')],
     ...incomeCategories.map(c => [c.id, c.name] as [string, string]),
@@ -453,8 +539,9 @@ function PutInBudget({
       <Text style={{ ...styles.smallText, color: theme.pageTextSubdued }}>
         <Trans>
           Pick an income category for each line, then add these amounts to this
-          month's budget. Use the arrows at the top to plan a future month. Only
-          these categories change. Undo (Ctrl+Z) takes it back.
+          month's budget. Use the arrows at the top to plan a future month.
+          After your pay lands, "Match budget to deposits" sets each income
+          budget to what was received. Undo (Ctrl+Z) takes either back.
         </Trans>
       </Text>
       {[...totals.entries()].map(([key, total]) => (
@@ -499,12 +586,22 @@ function PutInBudget({
             budget
           </Trans>
         </Button>
+        {canMatch && (
+          <Button onPress={() => void matchDeposits()}>
+            <Trans>Match budget to deposits</Trans>
+          </Button>
+        )}
         {status && (
           <Text style={{ ...styles.smallText, color: theme.noticeTextLight }}>
             {status}
           </Text>
         )}
       </View>
+      {ruleNote && (
+        <Text style={{ ...styles.smallText, color: theme.pageTextSubdued }}>
+          {ruleNote}
+        </Text>
+      )}
     </Card>
   );
 }

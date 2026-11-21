@@ -484,37 +484,44 @@ function MonthNav({
   const { t } = useTranslation();
   const locale = useLocale();
   const current = monthUtils.currentMonth();
+  // Month arrows on the left; the "go back" button sits in the middle of
+  // the row, with a matching empty space on the right to keep it centered.
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <Button
-        variant="bare"
-        aria-label={t('Previous month')}
-        onPress={() => onChange(monthUtils.prevMonth(month))}
+      <View
+        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 }}
       >
-        <SvgCheveronLeft width={14} height={14} />
-      </Button>
-      <Text
-        style={{
-          ...styles.mediumText,
-          fontWeight: 600,
-          minWidth: 150,
-          textAlign: 'center',
-        }}
-      >
-        {monthUtils.format(month, 'MMMM yyyy', locale)}
-      </Text>
-      <Button
-        variant="bare"
-        aria-label={t('Next month')}
-        onPress={() => onChange(monthUtils.nextMonth(month))}
-      >
-        <SvgCheveronRight width={14} height={14} />
-      </Button>
+        <Button
+          variant="bare"
+          aria-label={t('Previous month')}
+          onPress={() => onChange(monthUtils.prevMonth(month))}
+        >
+          <SvgCheveronLeft width={14} height={14} />
+        </Button>
+        <Text
+          style={{
+            ...styles.mediumText,
+            fontWeight: 600,
+            minWidth: 150,
+            textAlign: 'center',
+          }}
+        >
+          {monthUtils.format(month, 'MMMM yyyy', locale)}
+        </Text>
+        <Button
+          variant="bare"
+          aria-label={t('Next month')}
+          onPress={() => onChange(monthUtils.nextMonth(month))}
+        >
+          <SvgCheveronRight width={14} height={14} />
+        </Button>
+      </View>
       {month !== current && (
-        <Button variant="bare" onPress={() => onChange(current)}>
-          <Trans>Current month</Trans>
+        <Button onPress={() => onChange(current)}>
+          <Trans>Go back to current month</Trans>
         </Button>
       )}
+      <View style={{ flex: 1 }} />
     </View>
   );
 }

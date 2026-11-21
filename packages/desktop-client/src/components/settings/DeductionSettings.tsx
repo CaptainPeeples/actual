@@ -4,11 +4,13 @@ import React from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Select } from '@actual-app/components/select';
+import { View } from '@actual-app/components/view';
 import type {
   Deduction,
   DeductionKind,
 } from '@actual-app/core/shared/paycheck/types';
 
+import { Checkbox } from '#components/forms';
 import {
   AddButton,
   ChecksSelect,
@@ -85,6 +87,17 @@ function DeductionRow({
           width={80}
         />
       </Field>
+      {isPercent && (
+        <Field label={t('Also on bonuses')}>
+          <View style={{ height: 28, justifyContent: 'center' }}>
+            <Checkbox
+              aria-label={t('Also on bonuses')}
+              checked={deduction.onBonus ?? false}
+              onChange={e => onChange({ onBonus: e.target.checked })}
+            />
+          </View>
+        </Field>
+      )}
       {byDay && income.paydays.length > 1 && (
         <Field label={t('On')}>
           <ChecksSelect

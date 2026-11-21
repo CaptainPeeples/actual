@@ -99,19 +99,33 @@ export type Deduction = {
   mode: 'percent' | 'amount';
   value: number;
   checks: CheckFilter;
+  // Percent deductions only: also take the percent from bonuses.
+  onBonus?: boolean;
 };
 
 export type DeductionSettings = { deductions: Deduction[] };
 
 // What a real pay stub said. Only gross and net are needed; the rest are
 // optional and shown in place of the estimate when filled in.
+// Numbers copied from a real pay stub. They replace the estimate for that
+// check; anything left out is still estimated. Several stubs paid in the
+// same pay slot (a bonus check, a make-up check) can be added together.
 export type ActualCheck = {
+  // Paid, taxed earnings: hours pay + bonuses + taxed per diem. Leave out
+  // taxed-but-not-paid amounts and untaxed per diem.
   gross: number;
   net: number;
   federal?: number;
   state?: number;
   socialSecurity?: number;
   medicare?: number;
+  // Per diem included in gross (taxed), and untaxed per diem paid on top.
+  taxedPerDiem?: number;
+  perDiem?: number;
+  // Real deduction amounts, by deduction id from Settings → Deductions.
+  deductions?: Record<string, number>;
+  // Real "other" employee taxes by name (replace the estimated ones).
+  otherTaxes?: Record<string, number>;
 };
 
 export type CheckRecord = {

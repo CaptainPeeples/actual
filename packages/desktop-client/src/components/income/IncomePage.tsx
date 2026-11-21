@@ -272,25 +272,29 @@ function CheckCard({
           <Line key={l.id} label={l.name} value={l.amount} />
         ))}
         <Blanks count={rows.pay - payRows(check)} />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Text>
-            <Trans>Bonus</Trans>
-          </Text>
-          <NumberField
-            label={t('Bonus')}
-            prefix="$"
-            value={check.extraPay}
-            onChange={onBonus}
-            width={80}
-            compact
-          />
-        </View>
+        {check.status === 'actual' ? (
+          <Line label={t('Bonus')} value={check.extraPay} />
+        ) : (
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text>
+              <Trans>Bonus</Trans>
+            </Text>
+            <NumberField
+              label={t('Bonus')}
+              prefix="$"
+              value={check.extraPay}
+              onChange={onBonus}
+              width={80}
+              compact
+            />
+          </View>
+        )}
         <Line label={t('Gross pay')} value={check.gross} bold />
 
         {rows.pretax > 0 && (

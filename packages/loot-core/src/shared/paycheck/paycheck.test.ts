@@ -542,3 +542,92 @@ describe('bonus tax rates', () => {
     expect(r.taxes.state).toBeCloseTo(base.taxes.state + 29.1, 2);
   });
 });
+
+describe('real stub numbers', () => {
+  const deductions: Deduction[] = [
+    {
+      id: 'h',
+      name: 'Health',
+      kind: 'section125',
+      mode: 'amount',
+      value: 100,
+      checks: 'all',
+    },
+    {
+      id: 'u',
+      name: 'Union',
+      kind: 'posttax',
+      mode: 'percent',
+      value: 1.5,
+      checks: 'all',
+      onBonus: true,
+    },
+  ];
+
+  it('uses stub deductions, other taxes, and per diem', () => {
+    const r = computeCheck({
+      date: '2026-03-01',
+      paydayId: 'a',
+      income: income(),
+      tax: tax({ state: 'TX' }),
+      deductions,
+      record: {
+        actual: {
+          gross: 4020,
+          net: 3100,
+          taxedPerDiem: 20,
+          perDiem: 50,
+          deductions: { h: 90 },
+          otherTaxes: { 'State unemployment': 2.5 },
+        },
+      },
+      ytd: EMPTY_YTD,
+    });
+    expect(r.status).toBe('actual');
+    expect(r.hourPay.map(l => l.amount)).toEqual([4000, 20]);
+    expect(r.extraPay).toBe(0);
+    expect(r.perDiem).toBe(50);
+    expect(r.pretax[0].amount).toBe(90);
+    // Social Security wages use the stub's health amount.
+    expect(r.ssWages).toBe(3930);
+    expect(r.taxes.other).toEqual([
+      {
+        id: 'actual-State unemployment',
+        name: 'State unemployment',
+        amount: 2.5,
+      },
+    ]);
+    expect(r.net).toBe(3100);
+  });
+
+  it('takes a percent deduction from bonuses when asked', () => {
+    const r = computeCheck({
+      date: '2026-03-01',
+      paydayId: 'a',
+      income: income(),
+      tax: tax({ state: 'TX' }),
+      deductions,
+      record: { extraPay: 1000 },
+      ytd: EMPTY_YTD,
+    });
+    expect(r.posttax[0].amount).toBe(75);
+  });
+
+  it('puts a real check bonus on its own line in the split', () => {
+    const checks = computeYear(2026, {
+      income: income(),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {
+        '2026': {
+          checks: { '2026-01-01': { actual: { gross: 5000, net: 3900 } } },
+        },
+      },
+    });
+    const split = checks[0].netSplit;
+    expect(split.map(l => l.id)).toEqual(['reg', 'extra']);
+    expect(Number(split.reduce((s, l) => s + l.amount, 0).toFixed(2))).toBe(
+      3900,
+    );
+  });
+});

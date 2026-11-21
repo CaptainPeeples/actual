@@ -52,7 +52,13 @@ export function NumberField({
   width = 100,
   compact = false,
 }: NumberFieldProps) {
+  // Show at most 2 decimals. Only save when the text was changed, so a
+  // stored value with more decimals isn't rounded just by tabbing past it.
+  const shown = value ? String(Number(value.toFixed(2))) : '';
   const commit = (text: string) => {
+    if (text.trim() === shown) {
+      return;
+    }
     const parsed = parseNumber(text);
     if (parsed != null && parsed !== value) {
       onChange(parsed);
@@ -65,7 +71,7 @@ export function NumberField({
         key={String(value)}
         aria-label={label}
         inputMode="decimal"
-        defaultValue={value ? String(value) : ''}
+        defaultValue={shown}
         placeholder="0"
         onUpdate={commit}
         onEnter={commit}

@@ -360,14 +360,23 @@ export function computeCheck(input: CheckInput): PaycheckResult {
       : 0;
   const perDiemTaxed = pd?.taxed ? perDiemAmount : 0;
   const perDiem = pd?.taxed ? 0 : perDiemAmount;
-  if (pd?.enabled && pd.taxed && applies(pd.checks, paydayId)) {
-    hourPay.push({ id: PER_DIEM_ID, name: 'Per diem', amount: perDiemTaxed });
+  let taxedPerDiem = perDiemTaxed;
+  let untaxedPerDiem = perDiem;
+  if (actual) {
+    taxedPerDiem = actual.taxedPerDiem ?? (pd?.taxed ? perDiemTaxed : 0);
+    untaxedPerDiem = actual.perDiem ?? perDiem;
+  }
+  if (
+    taxedPerDiem !== 0 ||
+    (pd?.enabled && pd.taxed && applies(pd.checks, paydayId))
+  ) {
+    hourPay.push({ id: PER_DIEM_ID, name: 'Per diem', amount: taxedPerDiem });
   }
 
   const extraPay = actual
-    ? cents(actual.gross - hourTotal - perDiemTaxed)
+    ? cents(actual.gross - hourTotal - taxedPerDiem)
     : cents(record?.extraPay ?? 0);
-  const gross = cents(hourTotal + perDiemTaxed + extraPay);
+  const gross = cents(hourTotal + taxedPerDiem + extraPay);
   // Extra pay (bonuses) is withheld at the flat supplemental rate. A
   // negative difference (fewer hours than usual) just lowers regular pay.
   const supplemental = Math.max(0, extraPay);
@@ -379,10 +388,15 @@ export function computeCheck(input: CheckInput): PaycheckResult {
   // Percent deductions are figured on hourly pay and rounded up to the
   // cent, like most payroll systems.
   const own = deductions.filter(d => applies(d.checks, paydayId));
-  const amountOf = (d: Deduction) =>
+  const estimateOf = (d: Deduction) =>
     d.mode === 'percent'
-      ? centsUp(((d.value || 0) / 100) * hourTotal)
+      ? centsUp(
+          ((d.value || 0) / 100) *
+            (hourTotal + (d.onBonus ? Math.max(0, extraPay) : 0)),
+        )
       : cents(d.value || 0);
+  const amountOf = (d: Deduction) =>
+    actual?.deductions?.[d.id] ?? estimateOf(d);
   const pretaxAll = own
     .filter(d => d.kind !== 'posttax')
     .map(d => ({
@@ -451,7 +465,7 @@ export function computeCheck(input: CheckInput): PaycheckResult {
 
   const local = cents(((tax.localPercent || 0) / 100) * taxableWages);
 
-  const other: PaycheckLine[] = tax.otherTaxes.map(t => {
+  const estimatedOther: PaycheckLine[] = tax.otherTaxes.map(t => {
     const room =
       t.wageCap != null ? Math.max(0, t.wageCap - ytd.gross) : Infinity;
     return {
@@ -460,6 +474,14 @@ export function computeCheck(input: CheckInput): PaycheckResult {
       amount: cents(Math.min(gross, room) * ((t.percent || 0) / 100)),
     };
   });
+
+  const other: PaycheckLine[] = actual?.otherTaxes
+    ? Object.entries(actual.otherTaxes).map(([name, amount]) => ({
+        id: `actual-${name}`,
+        name,
+        amount: cents(amount),
+      }))
+    : estimatedOther;
 
   if (actual) {
     federal = actual.federal ?? federal;
@@ -488,7 +510,7 @@ export function computeCheck(input: CheckInput): PaycheckResult {
   const posttaxTotal = sum(posttax.map(p => p.amount));
   const net = actual
     ? cents(actual.net)
-    : cents(gross - pretaxTotal - taxTotal - posttaxTotal + perDiem);
+    : cents(gross - pretaxTotal - taxTotal - posttaxTotal + untaxedPerDiem);
 
   return {
     date,
@@ -496,7 +518,7 @@ export function computeCheck(input: CheckInput): PaycheckResult {
     status: actual ? 'actual' : 'estimated',
     hourPay,
     extraPay,
-    perDiem,
+    perDiem: untaxedPerDiem,
     gross,
     imputed,
     pretax,
@@ -640,7 +662,7 @@ export function computeYear(
       ytd: covered ? before : after,
     };
     const result = computeCheck(input);
-    result.netSplit = netByLine(input, result.net);
+    result.netSplit = netByLine(input, result.net, result.extraPay);
     if (covered) {
       before = result.ytd;
     } else {
@@ -655,8 +677,12 @@ export function computeYear(
 // each later line gets what it adds on top. So base pay on a check with
 // extra hours nets the same as a base-only check, and the extra hours carry
 // the higher taxes. Per diem and bonuses come last, each on its own line.
-export function netByLine(input: CheckInput, totalNet: number): PaycheckLine[] {
-  const { income, paydayId, record } = input;
+export function netByLine(
+  input: CheckInput,
+  totalNet: number,
+  extraPay = 0,
+): PaycheckLine[] {
+  const { income, paydayId } = input;
   const own = income.hourLines.filter(l => applies(l.checks, paydayId));
   const out: PaycheckLine[] = [];
   let previous = 0;
@@ -690,7 +716,7 @@ export function netByLine(input: CheckInput, totalNet: number): PaycheckLine[] {
 
   const rest = cents(totalNet - previous);
   if (rest !== 0) {
-    if (record?.extraPay || record?.actual || out.length === 0) {
+    if (extraPay > 0.005 || out.length === 0) {
       out.push({ id: 'extra', name: 'Bonus', amount: rest });
     } else {
       const last = out[out.length - 1];

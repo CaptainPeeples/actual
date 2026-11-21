@@ -803,16 +803,13 @@ export function syncSplitRule(
 
 // Categories a rule splits into (in split order), for showing in Settings.
 export function splitRuleCategories(rule: RuleEntity): string[] {
-  return rule.actions
-    .filter(
-      a => a.op === 'set' && a.field === 'category' && a.options?.splitIndex,
-    )
-    .sort(
-      (a, b) =>
-        ((a.options as { splitIndex?: number })?.splitIndex ?? 0) -
-        ((b.options as { splitIndex?: number })?.splitIndex ?? 0),
-    )
-    .map(a => String((a as { value: unknown }).value));
+  const out: Array<[number, string]> = [];
+  for (const a of rule.actions) {
+    if (a.op === 'set' && a.field === 'category' && a.options?.splitIndex) {
+      out.push([a.options.splitIndex, String(a.value)]);
+    }
+  }
+  return out.sort((x, y) => x[0] - y[0]).map(([, id]) => id);
 }
 
 export function hasFixedSplits(rule: RuleEntity): boolean {

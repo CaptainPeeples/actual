@@ -508,3 +508,37 @@ describe('pay dates', () => {
     expect(rateOn(inc, '2026-07-01')).toBe(55);
   });
 });
+
+describe('bonus tax rates', () => {
+  const run = (overrides: Partial<TaxSettings>) =>
+    computeCheck({
+      date: '2026-03-01',
+      paydayId: 'a',
+      income: income(),
+      tax: tax({ state: 'NC', ...overrides }),
+      deductions: [],
+      record: { extraPay: 1000 },
+      ytd: EMPTY_YTD,
+    });
+
+  it('uses 22% federal and the state bonus rate by default', () => {
+    const plain = computeCheck({
+      date: '2026-03-01',
+      paydayId: 'a',
+      income: income(),
+      tax: tax({ state: 'NC' }),
+      deductions: [],
+      ytd: EMPTY_YTD,
+    });
+    const r = run({});
+    expect(r.taxes.federal).toBeCloseTo(plain.taxes.federal + 220, 2);
+    expect(r.taxes.state).toBeCloseTo(plain.taxes.state + 40.9, 2);
+  });
+
+  it('uses the rates typed in Settings', () => {
+    const base = run({});
+    const r = run({ bonusFederalPercent: 30, bonusStatePercent: 7 });
+    expect(r.taxes.federal).toBeCloseTo(base.taxes.federal + 80, 2);
+    expect(r.taxes.state).toBeCloseTo(base.taxes.state + 29.1, 2);
+  });
+});

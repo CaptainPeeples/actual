@@ -277,7 +277,8 @@ rate typed in a month carries forward to later months. Go back a month to see
 or fix past months; those hours feed the year-to-date totals, so Social
 Security stops on the right check.
 
-**Bonus** box on each check: withheld at the 22% supplemental rate.
+**Bonus** box on each check: withheld at the 22% federal supplemental rate and
+the state's bonus rate, or the rates set in Settings → Taxes → Bonus tax rates.
 
 **Per diem** (Settings → Income): rate, starting hours, which check, and
 whether it's taxed. Untaxed per diem is added to net pay after taxes.

@@ -294,7 +294,7 @@ export function stateWithholding(
   return state.roundToWholeDollar ? Math.round(perCheck) : cents(perCheck);
 }
 
-function stateSupplementalRate(
+export function stateSupplementalRate(
   tax: TaxSettings,
   state: StateWithholding | null,
 ): number {
@@ -408,8 +408,9 @@ export function computeCheck(input: CheckInput): PaycheckResult {
   const regularWages = Math.max(0, cents(taxableWages - supplemental));
 
   // Federal
-  const supplementalFedRate =
-    ytd.gross + gross > 1_000_000
+  const supplementalFedRate = tax.bonusFederalPercent
+    ? tax.bonusFederalPercent / 100
+    : ytd.gross + gross > 1_000_000
       ? fed.supplementalOverMillionRate
       : fed.supplementalRate;
   let federal =
@@ -440,7 +441,12 @@ export function computeCheck(input: CheckInput): PaycheckResult {
   const state = stateInfo(tax, year);
   let stateTax =
     stateWithholding(regularWages, periods, tax, state) +
-    cents(supplemental * stateSupplementalRate(tax, state)) +
+    cents(
+      supplemental *
+        (tax.bonusStatePercent && state && state.kind !== 'none'
+          ? tax.bonusStatePercent / 100
+          : stateSupplementalRate(tax, state)),
+    ) +
     (state && state.kind !== 'none' ? tax.stateExtra || 0 : 0);
 
   const local = cents(((tax.localPercent || 0) / 100) * taxableWages);
@@ -579,12 +585,16 @@ export function incomeForCheck(
   const entry = monthEntry(history, month);
   const hours = (id: string, fallback: number) =>
     entry?.hours?.[hoursKey(id, paydayId)] ?? fallback;
-  const rate = carriedValue(history, month, e => e.rate) ?? rateOn(income, date);
+  const rate =
+    carriedValue(history, month, e => e.rate) ?? rateOn(income, date);
   const pd = income.perDiem;
   return {
     ...income,
     rates: [{ from: '', rate }],
-    hourLines: income.hourLines.map(l => ({ ...l, hours: hours(l.id, l.hours) })),
+    hourLines: income.hourLines.map(l => ({
+      ...l,
+      hours: hours(l.id, l.hours),
+    })),
     perDiem: pd
       ? {
           ...pd,
@@ -645,10 +655,7 @@ export function computeYear(
 // each later line gets what it adds on top. So base pay on a check with
 // extra hours nets the same as a base-only check, and the extra hours carry
 // the higher taxes. Per diem and bonuses come last, each on its own line.
-export function netByLine(
-  input: CheckInput,
-  totalNet: number,
-): PaycheckLine[] {
+export function netByLine(input: CheckInput, totalNet: number): PaycheckLine[] {
   const { income, paydayId, record } = input;
   const own = income.hourLines.filter(l => applies(l.checks, paydayId));
   const out: PaycheckLine[] = [];

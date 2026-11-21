@@ -81,6 +81,10 @@ export type TaxSettings = {
   stateExtra: number;
   localPercent: number;
   otherTaxes: OtherTax[];
+  // Bonus withholding rates in percent. 0 or missing = the default (22%
+  // federal, the state's own bonus rate).
+  bonusFederalPercent?: number;
+  bonusStatePercent?: number;
 };
 
 // retirement: 401(k)/403(b) — lowers federal/state wages only.

@@ -11,6 +11,7 @@ import { spacing } from '@actual-app/components/tokens';
 import { View } from '@actual-app/components/view';
 import {
   hasTaxTablesFor,
+  stateSupplementalRate,
   taxYearFor,
 } from '@actual-app/core/shared/paycheck/paycheck';
 import type {
@@ -312,6 +313,51 @@ export function TaxSettingsPage() {
             />
           }
         />
+      </SettingsGroup>
+
+      <SettingsGroup
+        title={t('Bonus tax rates')}
+        description={
+          <Trans>
+            How much is taken from a bonus. Leave at 0 to use the usual rates:
+            22% federal and your state's bonus rate. If your bonus stubs show
+            different rates, type them here.
+          </Trans>
+        }
+      >
+        <SettingsRow
+          title={t('Federal on bonuses')}
+          description={t('Usual: 22%')}
+          control={
+            <NumberField
+              label={t('Federal on bonuses')}
+              suffix="%"
+              value={tax.bonusFederalPercent ?? 0}
+              onChange={bonusFederalPercent => update({ bonusFederalPercent })}
+              width={70}
+            />
+          }
+        />
+        {hasStateTax && (
+          <SettingsRow
+            title={t('State on bonuses')}
+            description={t('Usual for {{name}}: {{rate}}%', {
+              name: state.name,
+              rate: Number(
+                (stateSupplementalRate(tax, state) * 100).toFixed(2),
+              ),
+            })}
+            control={
+              <NumberField
+                label={t('State on bonuses')}
+                suffix="%"
+                value={tax.bonusStatePercent ?? 0}
+                onChange={bonusStatePercent => update({ bonusStatePercent })}
+                width={70}
+              />
+            }
+          />
+        )}
       </SettingsGroup>
 
       <SettingsGroup

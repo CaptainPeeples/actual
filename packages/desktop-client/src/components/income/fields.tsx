@@ -38,6 +38,8 @@ type NumberFieldProps = {
   prefix?: string;
   suffix?: string;
   width?: number;
+  // Short box that fits inside a text line (no taller than the text).
+  compact?: boolean;
 };
 
 // A number box that saves when you leave it or press Enter.
@@ -48,6 +50,7 @@ export function NumberField({
   prefix,
   suffix,
   width = 100,
+  compact = false,
 }: NumberFieldProps) {
   const commit = (text: string) => {
     const parsed = parseNumber(text);
@@ -66,7 +69,13 @@ export function NumberField({
         placeholder="0"
         onUpdate={commit}
         onEnter={commit}
-        style={{ width, textAlign: 'right' }}
+        style={{
+          width,
+          textAlign: 'right',
+          ...(compact
+            ? { padding: '0 5px', height: '1.4em', lineHeight: '1.4em' }
+            : {}),
+        }}
       />
       {suffix && <Text style={{ color: theme.pageTextSubdued }}>{suffix}</Text>}
     </View>

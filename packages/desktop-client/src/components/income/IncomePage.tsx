@@ -287,7 +287,8 @@ function CheckCard({
             prefix="$"
             value={check.extraPay}
             onChange={onBonus}
-            width={90}
+            width={80}
+            compact
           />
         </View>
         <Line label={t('Gross pay')} value={check.gross} bold />
@@ -650,6 +651,7 @@ function MonthBar({ month }: { month: string }) {
         flexDirection: 'row',
         flexWrap: 'wrap',
         alignItems: 'flex-end',
+        justifyContent: 'space-between',
         gap: spacing.md,
         flexShrink: 0,
         padding: `${spacing.sm}px ${spacing.lg}px`,

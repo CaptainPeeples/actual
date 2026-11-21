@@ -322,7 +322,7 @@ function PutInBudget({
     setIncome({ ...income, budgetCategories: next });
   };
 
-  const apply = async () => {
+  const apply = async (target: string) => {
     const byCategory = new Map<string, number>();
     for (const [key, total] of totals) {
       const category = chosen[key];
@@ -332,14 +332,14 @@ function PutInBudget({
     }
     for (const [category, total] of byCategory) {
       await send('budget/budget-amount-only-this-month', {
-        month,
+        month: target,
         category,
         amount: amountToInteger(Math.round(total * 100) / 100),
       });
     }
     setStatus(
       t('Done. Budget set for {{month}}.', {
-        month: monthUtils.format(month, 'MMMM yyyy', locale),
+        month: monthUtils.format(target, 'MMMM yyyy', locale),
       }),
     );
   };
@@ -351,12 +351,12 @@ function PutInBudget({
   const anyChosen = [...totals.keys()].some(k => chosen[k]);
 
   return (
-    <Card title={t('Put in budget')}>
+    <Card title={t('Planned income')}>
       <Text style={{ ...styles.smallText, color: theme.pageTextSubdued }}>
         <Trans>
-          Pick an income category for each line, then press the button. It sets
-          this month's budget for those categories only. Undo (Ctrl+Z) takes it
-          back.
+          Pick an income category for each line, then add these amounts to the
+          month you're looking at or the month after it. Only these categories
+          change. Undo (Ctrl+Z) takes it back.
         </Trans>
       </Text>
       {[...totals.entries()].map(([key, total]) => (
@@ -385,6 +385,7 @@ function PutInBudget({
       <View
         style={{
           flexDirection: 'row',
+          flexWrap: 'wrap',
           alignItems: 'center',
           gap: spacing.md,
           marginTop: spacing.sm,
@@ -393,11 +394,15 @@ function PutInBudget({
         <Button
           variant="primary"
           isDisabled={!anyChosen}
-          onPress={() => void apply()}
+          onPress={() => void apply(month)}
         >
-          <Trans>
-            Put in {{ month: monthUtils.format(month, 'MMMM', locale) }} budget
-          </Trans>
+          <Trans>Add to current month</Trans>
+        </Button>
+        <Button
+          isDisabled={!anyChosen}
+          onPress={() => void apply(monthUtils.nextMonth(month))}
+        >
+          <Trans>Add to next month</Trans>
         </Button>
         {status && (
           <Text style={{ ...styles.smallText, color: theme.noticeTextLight }}>

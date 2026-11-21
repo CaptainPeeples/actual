@@ -30,6 +30,7 @@ import { ContextMenu } from './ContextMenu';
 import { EnableBankingCallback } from './EnableBankingCallback';
 import { FeatureErrorFallback } from './FeatureErrorFallback';
 import { GlobalKeys } from './GlobalKeys';
+import { IncomePage } from './income/IncomePage';
 import { MobileBankSyncAccountEditPage } from './mobile/banksync/MobileBankSyncAccountEditPage';
 import { MobileNavTabs } from './mobile/MobileNavTabs';
 import { TransactionEdit } from './mobile/transactions/TransactionEdit';
@@ -46,7 +47,10 @@ import {
   Settings,
   SettingsIndex,
 } from './settings';
+import { DeductionSettings } from './settings/DeductionSettings';
 import { DefaultBudgetSettings } from './settings/DefaultBudget';
+import { IncomePaySettings } from './settings/IncomeSettings';
+import { TaxSettingsPage } from './settings/TaxSettings';
 import { FloatableSidebar } from './sidebar';
 import { SidebarMenuRoute } from './sidebar/SidebarMenuRoute';
 import { StartPageRedirect } from './StartPageRedirect';
@@ -279,6 +283,19 @@ export function FinancesApp() {
                       }
                     />
 
+                    {/* Custom branch: Income page. */}
+                    <Route
+                      path="/income"
+                      element={
+                        <ErrorBoundary
+                          FallbackComponent={FeatureErrorFallback}
+                          resetKeys={[location.pathname]}
+                        >
+                          <IncomePage />
+                        </ErrorBoundary>
+                      }
+                    />
+
                     <Route
                       path="/schedules"
                       element={
@@ -404,6 +421,13 @@ export function FinancesApp() {
                       <Route
                         path="default-budget"
                         element={<DefaultBudgetSettings />}
+                      />
+                      {/* Custom branch: Income page settings. */}
+                      <Route path="income" element={<IncomePaySettings />} />
+                      <Route path="taxes" element={<TaxSettingsPage />} />
+                      <Route
+                        path="deductions"
+                        element={<DeductionSettings />}
                       />
                       <Route
                         path="schedules"

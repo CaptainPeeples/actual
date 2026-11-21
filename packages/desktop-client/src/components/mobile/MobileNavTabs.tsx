@@ -8,6 +8,7 @@ import { useResponsive } from '@actual-app/components/hooks/useResponsive';
 import {
   SvgAdd,
   SvgCog,
+  SvgMoneyBag,
   SvgPiggyBank,
   SvgReports,
   SvgWallet,
@@ -105,6 +106,13 @@ export function MobileNavTabs() {
       path: '/accounts',
       style: navTabStyle,
       Icon: SvgPiggyBank,
+    },
+    // Custom branch: Income page.
+    {
+      name: t('Income'),
+      path: '/income',
+      style: navTabStyle,
+      Icon: SvgMoneyBag,
     },
     {
       name: t('Reports'),

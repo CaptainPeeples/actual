@@ -2,9 +2,12 @@ import { useTranslation } from 'react-i18next';
 
 import { useResponsive } from '@actual-app/components/hooks/useResponsive';
 import {
+  SvgCalculator,
   SvgCog,
+  SvgMoneyBag,
   SvgPiggyBank,
   SvgPylon,
+  SvgWallet,
 } from '@actual-app/components/icons/v1';
 import { SvgSettingsSliderAlternate } from '@actual-app/components/icons/v2';
 import { theme } from '@actual-app/components/theme';
@@ -62,6 +65,22 @@ export function SettingsNav() {
         title={t('Default budget')}
         Icon={SvgPiggyBank}
         to="/settings/default-budget"
+      />
+      {/* Custom branch: Income page settings. */}
+      <SettingsNavLink
+        title={t('Income')}
+        Icon={SvgMoneyBag}
+        to="/settings/income"
+      />
+      <SettingsNavLink
+        title={t('Taxes')}
+        Icon={SvgCalculator}
+        to="/settings/taxes"
+      />
+      <SettingsNavLink
+        title={t('Deductions')}
+        Icon={SvgWallet}
+        to="/settings/deductions"
       />
       {menuItems.map(item => (
         <SettingsNavLink

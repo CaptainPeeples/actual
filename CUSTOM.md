@@ -241,6 +241,51 @@ Code: `packages/loot-core/src/server/budget/default-budget.ts`,
 `packages/desktop-client/src/components/settings/DefaultBudget.tsx`,
 `packages/desktop-client/src/components/modals/DefaultBudgetChoiceModal.tsx`
 
+### 11. Income page
+
+A new **Income** page (left menu under Budget; a tab on the phone) works out
+each paycheck for a month: gross pay, pre-tax deductions, each tax, after-tax
+deductions, and **net pay**. It also shows the month's take-home and the
+year's totals.
+
+**Settings** (all new, under Settings):
+
+- **Income:** pay schedule (weekly, every 2 weeks, twice a month, monthly),
+  paydays, hourly rate (with raises by date), hour lines (hours, × rate for
+  overtime, which check), taxed-but-not-paid amounts, other monthly income.
+- **Taxes:** filing status, W-4 (2020+ Steps 2–4, or older allowances), ZIP →
+  state, state allowances and extra, city/county %, other employee taxes with
+  an optional yearly wage cap.
+- **Deductions:** pre-tax (401(k)/403(b) lowers income tax only; medical,
+  dental, vision, HSA lower Social Security and Medicare too) and after-tax.
+  Each is $ or % of hourly pay (rounded up to the cent), on every check or one.
+
+**How taxes are figured** (each check, like payroll):
+
+- Federal: IRS Pub 15-T annual percentage method. Extra pay is withheld at
+  the 22% supplemental rate.
+- Social Security stops at the yearly wage base; Medicare adds 0.9% past
+  $200,000. Both use year-to-date pay from the year's checks in date order, so
+  they start over with the first check of each year.
+- State: a table for all 50 states + DC. Entries marked `estimate` are close
+  but skip some state-specific steps.
+
+**Put in budget** (tracking budgets): pick an income category for each check
+and press the button. It sets that month's budget for those categories only
+(as an "Only this month" change), and Undo takes it back.
+
+Settings are saved as synced preferences (`income-settings`, `income-taxes`,
+`income-deductions`, `income-history`). Nothing else in the budget changes.
+
+**Each new year:** add a tax file (for example `federal-2027.ts` and
+`states-2027.ts`) and list it in `TAX_YEARS` in `paycheck.ts`. Until then the
+newest tables are used and Settings → Taxes shows a note.
+
+Code: `packages/loot-core/src/shared/paycheck/`,
+`packages/desktop-client/src/components/income/`,
+`packages/desktop-client/src/components/settings/IncomeSettings.tsx`,
+`TaxSettings.tsx`, `DeductionSettings.tsx`
+
 ## Docker image
 
 Every push to `peeples` builds and publishes an image with GitHub Actions

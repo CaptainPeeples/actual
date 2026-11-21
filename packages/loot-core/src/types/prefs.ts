@@ -71,7 +71,12 @@ export type SyncedPrefs = Partial<
     | `flip-amount-${string}-${'csv' | 'qif'}`
     | `flags.${FeatureFlag}`
     | `learn-categories`
-    | `show-hidden-tags`,
+    | `show-hidden-tags`
+    // Custom branch: Income page and its settings (JSON).
+    | 'income-settings'
+    | 'income-taxes'
+    | 'income-deductions'
+    | 'income-history',
     string
   >
 >;

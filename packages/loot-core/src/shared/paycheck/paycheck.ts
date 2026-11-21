@@ -706,7 +706,15 @@ export function netByLine(
   });
 
   const pd = income.perDiem;
-  if (pd?.enabled && applies(pd.checks, paydayId)) {
+  const actual = input.record?.actual;
+  if (actual) {
+    // A real check: its per diem is what the stub says.
+    const amount = cents((actual.perDiem ?? 0) + (actual.taxedPerDiem ?? 0));
+    if (amount !== 0) {
+      out.push({ id: PER_DIEM_ID, name: 'Per diem', amount });
+      previous = cents(previous + amount);
+    }
+  } else if (pd?.enabled && applies(pd.checks, paydayId)) {
     const net = netWith(own, true);
     out.push({
       id: PER_DIEM_ID,

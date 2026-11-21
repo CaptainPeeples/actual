@@ -729,3 +729,33 @@ describe('split rule sync', () => {
     expect(syncSplitRule(rule, { base: 4000, extra: 3000 })).toBeNull();
   });
 });
+
+describe('per diem on real checks', () => {
+  it('splits out the stub per diem, not the estimate', () => {
+    const checks = computeYear(2026, {
+      income: income({
+        perDiem: {
+          enabled: true,
+          rate: 2,
+          hours: 100,
+          checks: 'all',
+          taxed: false,
+        },
+      }),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {
+        '2026': {
+          checks: {
+            '2026-01-01': { actual: { gross: 4000, net: 3300, perDiem: 60 } },
+          },
+        },
+      },
+    });
+    const split = checks[0].netSplit;
+    expect(split.find(l => l.id === PER_DIEM_ID)?.amount).toBe(60);
+    expect(Number(split.reduce((s, l) => s + l.amount, 0).toFixed(2))).toBe(
+      3300,
+    );
+  });
+});

@@ -631,3 +631,39 @@ describe('real stub numbers', () => {
     );
   });
 });
+
+describe('split leftovers', () => {
+  it('skip lines with no pay', () => {
+    const inc = income({
+      hourLines: [
+        { id: 'reg', name: 'Regular', hours: 40, multiplier: 1, checks: 'all' },
+        { id: 'ot', name: 'Overtime', hours: 0, multiplier: 1, checks: 'all' },
+      ],
+    });
+    const plain = computeYear(2026, {
+      income: inc,
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {},
+    })[0];
+    const checks = computeYear(2026, {
+      income: inc,
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {
+        '2026': {
+          checks: {
+            '2026-01-01': {
+              actual: { gross: 4000, net: Number((plain.net - 10).toFixed(2)) },
+            },
+          },
+        },
+      },
+    });
+    const split = checks[0].netSplit;
+    expect(split.find(l => l.id === 'ot')?.amount).toBe(0);
+    expect(split.find(l => l.id === 'reg')?.amount).toBe(
+      Number((plain.net - 10).toFixed(2)),
+    );
+  });
+});

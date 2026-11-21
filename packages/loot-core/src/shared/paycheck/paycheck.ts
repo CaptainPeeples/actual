@@ -719,8 +719,19 @@ export function netByLine(
     if (extraPay > 0.005 || out.length === 0) {
       out.push({ id: 'extra', name: 'Bonus', amount: rest });
     } else {
-      const last = out[out.length - 1];
-      last.amount = cents(last.amount + rest);
+      // Small leftovers (rounding, or a real stub that differs from the
+      // estimate) go on the last pay line that actually has pay, so a line
+      // with no hours never shows a negative amount.
+      const hourCount = own.length;
+      let target = -1;
+      for (let i = hourCount - 1; i >= 0; i--) {
+        if (Math.abs(out[i].amount) > 0.005) {
+          target = i;
+          break;
+        }
+      }
+      const line = out[target >= 0 ? target : out.length - 1];
+      line.amount = cents(line.amount + rest);
     }
   }
   return out;

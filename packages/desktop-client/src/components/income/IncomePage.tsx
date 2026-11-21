@@ -297,13 +297,17 @@ function PutInBudget({
     .filter(g => g.is_income && !g.hidden)
     .flatMap(g => (g.categories ?? []).filter(c => !c.hidden));
 
+  // One line per check and pay line (e.g. "20th check · Overages"), so each
+  // can go to its own income category. Taxes stay with the check; see
+  // netByLine for how a check's net is split.
   const totals = new Map<string, number>();
+  const labels = new Map<string, string>();
   for (const c of checks) {
-    const key = keyOf(c);
-    totals.set(key, (totals.get(key) ?? 0) + c.net);
-  }
-  if (income.otherMonthlyIncome > 0) {
-    totals.set('other', income.otherMonthlyIncome);
+    for (const line of c.netSplit) {
+      const key = `${keyOf(c)}:${line.id}`;
+      totals.set(key, (totals.get(key) ?? 0) + line.amount);
+      labels.set(key, `${labelOf(keyOf(c))} · ${line.name}`);
+    }
   }
 
   const chosen = income.budgetCategories ?? {};
@@ -368,7 +372,7 @@ function PutInBudget({
           }}
         >
           <Text style={{ flex: '1 1 140px' }}>
-            {labelOf(key)}{' '}
+            {labels.get(key)}{' '}
             <Text style={{ fontWeight: 600 }}>{money(total)}</Text>
           </Text>
           <Select
@@ -502,11 +506,9 @@ export function IncomePage() {
       : t('Paycheck');
   const keyOf = (c: PaycheckResult) => (byDay ? (c.paydayId ?? 'all') : 'all');
   const labelOf = (key: string) =>
-    key === 'other'
-      ? t('Other income')
-      : key === 'all'
-        ? t('Paychecks')
-        : t('{{name}} check', { name: paydayName(key) });
+    key === 'all'
+      ? t('Paychecks')
+      : t('{{name}} check', { name: paydayName(key) });
 
   return (
     <Page header={t('Income')}>

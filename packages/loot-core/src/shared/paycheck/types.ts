@@ -204,5 +204,7 @@ export type PaycheckResult = {
   posttax: PaycheckLine[];
   posttaxTotal: number;
   net: number;
+  // Net pay split by hour line (filled in by computeYear).
+  netSplit: PaycheckLine[];
   ytd: { gross: number; ssWages: number; medicareWages: number; net: number };
 };

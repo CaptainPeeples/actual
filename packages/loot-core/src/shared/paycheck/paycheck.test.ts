@@ -296,6 +296,50 @@ describe('a whole year', () => {
   });
 });
 
+describe('net split by line', () => {
+  const inc = income({
+    hourLines: [
+      { id: 'reg', name: 'Regular', hours: 40, multiplier: 1, checks: 'all' },
+      { id: 'ot', name: 'Overtime', hours: 20, multiplier: 1.5, checks: ['b'] },
+    ],
+  });
+  const config = {
+    income: inc,
+    tax: tax({ state: 'NC' }),
+    deductions: [
+      {
+        id: 'h',
+        name: 'Health',
+        kind: 'section125' as const,
+        mode: 'amount' as const,
+        value: 100,
+        checks: 'all' as const,
+      },
+    ],
+    history: {},
+  };
+
+  it('adds up to the check net, with base matching a base-only check', () => {
+    const [a, b] = computeYear(2026, config);
+    const sum = b.netSplit.reduce((s, l) => s + l.amount, 0);
+    expect(Number(sum.toFixed(2))).toBe(b.net);
+    expect(b.netSplit.map(l => l.id)).toEqual(['reg', 'ot']);
+    expect(b.netSplit[0].amount).toBe(a.net);
+    expect(a.netSplit).toEqual([{ id: 'reg', name: 'Regular', amount: a.net }]);
+  });
+
+  it('puts a bonus in its own line', () => {
+    const checks = computeYear(2026, {
+      ...config,
+      history: { '2026': { checks: { '2026-01-01': { extraPay: 500 } } } },
+    });
+    const split = checks[0].netSplit;
+    expect(split[split.length - 1].id).toBe('extra');
+    const sum = split.reduce((s, l) => s + l.amount, 0);
+    expect(Number(sum.toFixed(2))).toBe(checks[0].net);
+  });
+});
+
 describe('pay dates', () => {
   it('twice a month uses the chosen days, clamped to month length', () => {
     const dates = payDatesInYear(

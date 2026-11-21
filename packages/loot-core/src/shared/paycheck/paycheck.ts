@@ -494,6 +494,7 @@ export function computeCheck(input: CheckInput): PaycheckResult {
     posttax,
     posttaxTotal,
     net,
+    netSplit: [],
     ytd: {
       gross: cents(ytd.gross + gross),
       ssWages: cents(ytd.ssWages + ssWages),
@@ -535,7 +536,7 @@ export function computeYear(
 
   return payDatesInYear(income, year).map(({ date, paydayId }) => {
     const covered = start != null && date <= start.date;
-    const result = computeCheck({
+    const input: CheckInput = {
       date,
       paydayId,
       income,
@@ -543,7 +544,9 @@ export function computeYear(
       deductions,
       record: hist.checks?.[date],
       ytd: covered ? before : after,
-    });
+    };
+    const result = computeCheck(input);
+    result.netSplit = netByLine(input, result.net);
     if (covered) {
       before = result.ytd;
     } else {
@@ -551,6 +554,37 @@ export function computeYear(
     }
     return result;
   });
+}
+
+// Splits a check's net pay by hour line, in the order the lines are listed.
+// The first line gets the net that check would have with only that line;
+// each later line gets what it adds on top. So base pay on a check with
+// extra hours nets the same as a base-only check, and the extra hours carry
+// the higher taxes. Bonuses and real-stub differences go in "Extra pay".
+export function netByLine(input: CheckInput, totalNet: number): PaycheckLine[] {
+  const { income, paydayId, record } = input;
+  const own = income.hourLines.filter(l => applies(l.checks, paydayId));
+  const out: PaycheckLine[] = [];
+  let previous = 0;
+  own.forEach((line, i) => {
+    const net = computeCheck({
+      ...input,
+      income: { ...income, hourLines: own.slice(0, i + 1) },
+      record: undefined,
+    }).net;
+    out.push({ id: line.id, name: line.name, amount: cents(net - previous) });
+    previous = net;
+  });
+  const rest = cents(totalNet - previous);
+  if (rest !== 0) {
+    if (record?.extraPay || record?.actual || out.length === 0) {
+      out.push({ id: 'extra', name: 'Extra pay', amount: rest });
+    } else {
+      const last = out[out.length - 1];
+      last.amount = cents(last.amount + rest);
+    }
+  }
+  return out;
 }
 
 export function checksInMonth(

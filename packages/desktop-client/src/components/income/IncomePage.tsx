@@ -354,9 +354,9 @@ function PutInBudget({
     <Card title={t('Planned income')}>
       <Text style={{ ...styles.smallText, color: theme.pageTextSubdued }}>
         <Trans>
-          Pick an income category for each line, then add these amounts to the
-          month you're looking at or the month after it. Only these categories
-          change. Undo (Ctrl+Z) takes it back.
+          Pick an income category for each line, then add these amounts to this
+          month's budget. Use the arrows at the top to plan a future month. Only
+          these categories change. Undo (Ctrl+Z) takes it back.
         </Trans>
       </Text>
       {[...totals.entries()].map(([key, total]) => (
@@ -396,13 +396,10 @@ function PutInBudget({
           isDisabled={!anyChosen}
           onPress={() => void apply(month)}
         >
-          <Trans>Add to current month</Trans>
-        </Button>
-        <Button
-          isDisabled={!anyChosen}
-          onPress={() => void apply(monthUtils.nextMonth(month))}
-        >
-          <Trans>Add to next month</Trans>
+          <Trans>
+            Add to {{ month: monthUtils.format(month, 'MMMM', locale) }}'s
+            budget
+          </Trans>
         </Button>
         {status && (
           <Text style={{ ...styles.smallText, color: theme.noticeTextLight }}>

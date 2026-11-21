@@ -270,9 +270,23 @@ year's totals.
 - State: a table for all 50 states + DC. Entries marked `estimate` are close
   but skip some state-specific steps.
 
-**Put in budget** (tracking budgets): pick an income category for each check
-and press the button. It sets that month's budget for those categories only
-(as an "Only this month" change), and Undo takes it back.
+**Top bar** (under the month): the hourly rate, per diem rate, and an hours
+box for each pay line on each check it's on (built from Settings → Income).
+Each month keeps its own hours; untouched months use the Settings hours. A
+rate typed in a month carries forward to later months. Go back a month to see
+or fix past months; those hours feed the year-to-date totals, so Social
+Security stops on the right check.
+
+**Bonus** box on each check: withheld at the 22% supplemental rate.
+
+**Per diem** (Settings → Income): rate, starting hours, which check, and
+whether it's taxed. Untaxed per diem is added to net pay after taxes.
+
+**Planned income** (tracking budgets): each check's net pay is split by pay
+line (first line = the net of a check with only that line; each later line =
+what it adds; then per diem, then bonus). Pick an income category for each
+and press "Add to <Month>'s budget". It sets that month's budget for those
+categories only (as an "Only this month" change), and Undo takes it back.
 
 Settings are saved as synced preferences (`income-settings`, `income-taxes`,
 `income-deductions`, `income-history`). Nothing else in the budget changes.

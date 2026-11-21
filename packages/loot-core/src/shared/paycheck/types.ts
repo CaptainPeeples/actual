@@ -49,6 +49,7 @@ export type IncomeSettings = {
   hourLines: HourLine[];
   imputed: ImputedLine[];
   otherMonthlyIncome: number;
+  perDiem?: PerDiem;
   // Income category for each payday (or 'all' / 'other') used by the
   // Income page's "Put in budget" button.
   budgetCategories?: Record<string, string>;
@@ -123,9 +124,29 @@ export type YtdStart = {
   gross: number;
 };
 
+// What was typed in the Income page's top bar for one month. The rate
+// carries forward to later months; hours are for that month only. Hours are
+// keyed by hoursKey(lineId, paydayId).
+export type MonthEntry = {
+  rate?: number;
+  perDiemRate?: number;
+  hours?: Record<string, number>;
+};
+
+// Per diem: paid per hour away from base. Not taxed unless `taxed` is on;
+// then it's added to gross pay like other pay.
+export type PerDiem = {
+  enabled: boolean;
+  rate: number;
+  hours: number;
+  checks: CheckFilter;
+  taxed: boolean;
+};
+
 export type YearHistory = {
   start?: YtdStart;
   checks: Record<string, CheckRecord>;
+  months?: Record<string, MonthEntry>;
 };
 
 export type IncomeHistory = Record<string, YearHistory>;
@@ -185,6 +206,9 @@ export type PaycheckResult = {
   status: 'estimated' | 'actual';
   hourPay: PaycheckLine[];
   extraPay: number;
+  // Per diem paid on this check that is not taxed (added to net pay). Taxed
+  // per diem is in hourPay instead.
+  perDiem: number;
   gross: number;
   imputed: number;
   pretax: PaycheckLine[];

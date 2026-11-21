@@ -10,8 +10,10 @@ import type {
   ImputedLine,
   IncomeSettings,
   PayFrequency,
+  PerDiem,
 } from '@actual-app/core/shared/paycheck/types';
 
+import { Checkbox } from '#components/forms';
 import {
   AddButton,
   ChecksSelect,
@@ -83,6 +85,16 @@ export function IncomePaySettings() {
       imputed: income.imputed.map(l => (l.id === id ? { ...l, ...patch } : l)),
     });
 
+  const perDiem: PerDiem = income.perDiem ?? {
+    enabled: false,
+    rate: 0,
+    hours: 0,
+    checks: 'all',
+    taxed: false,
+  };
+  const setPerDiem = (patch: Partial<PerDiem>) =>
+    update({ perDiem: { ...perDiem, ...patch } });
+
   const rates = [...income.rates].sort((a, b) =>
     (a.from || '').localeCompare(b.from || ''),
   );
@@ -153,82 +165,35 @@ export function IncomePaySettings() {
         )}
       </SettingsGroup>
 
-      <SettingsGroup
-        title={t('Hourly rate')}
-        description={
-          <Trans>
-            Add a new line when you get a raise. Checks on or after its date use
-            the new rate.
-          </Trans>
-        }
-      >
-        {rates.map((r, i) => (
-          <ItemRow key={`${r.from}-${i}`}>
-            <Field label={i === 0 ? t('Rate') : t('Starting')}>
-              {i === 0 ? (
-                <View style={{ height: 28, justifyContent: 'center' }}>
-                  <Trans>From the start</Trans>
-                </View>
-              ) : (
-                <TextField
-                  label={t('Starting')}
-                  type="date"
-                  value={r.from}
-                  onChange={from =>
-                    update({
-                      rates: rates.map((x, j) =>
-                        j === i ? { ...x, from } : x,
-                      ),
-                    })
-                  }
-                />
-              )}
-            </Field>
-            <Field label={t('Per hour')}>
-              <NumberField
-                label={t('Per hour')}
-                prefix="$"
-                value={r.rate}
-                onChange={rate =>
-                  update({
-                    rates: rates.map((x, j) => (j === i ? { ...x, rate } : x)),
-                  })
-                }
-              />
-            </Field>
-            {i > 0 && (
-              <RemoveButton
-                label={t('Remove rate')}
-                onPress={() =>
-                  update({ rates: rates.filter((_, j) => j !== i) })
-                }
-              />
-            )}
-          </ItemRow>
-        ))}
-        <AddButton
-          onPress={() =>
-            update({
-              rates: [
-                ...rates,
-                {
-                  from: new Date().toISOString().slice(0, 10),
-                  rate: rates[rates.length - 1]?.rate ?? 0,
-                },
-              ],
-            })
+      <SettingsGroup title={t('Hourly rate')}>
+        <SettingsRow
+          title={t('Starting hourly rate')}
+          description={t(
+            'Change it month by month in the bar at the top of the Income page. A new rate carries forward to later months.',
+          )}
+          control={
+            <NumberField
+              label={t('Starting hourly rate')}
+              prefix="$"
+              value={rates[0]?.rate ?? 0}
+              onChange={rate =>
+                update({
+                  rates: rates.map((x, j) => (j === 0 ? { ...x, rate } : x)),
+                })
+              }
+            />
           }
-        >
-          <Trans>Add a raise</Trans>
-        </AddButton>
+        />
       </SettingsGroup>
 
       <SettingsGroup
         title={t('Hours per check')}
         description={
           <Trans>
-            One line per kind of pay. Use "× rate" for overtime (1.5). Pick a
-            check if a line is only on one of them.
+            One line per kind of pay. Each line, on each check it's on, gets an
+            hours box in the bar at the top of the Income page. The hours here
+            are the starting guess for months you haven't filled in. Use "×
+            rate" for overtime (1.5).
           </Trans>
         }
       >
@@ -302,6 +267,66 @@ export function IncomePaySettings() {
         >
           <Trans>Add hours</Trans>
         </AddButton>
+      </SettingsGroup>
+
+      <SettingsGroup
+        title={t('Per diem')}
+        description={
+          <Trans>
+            Pay per hour away from base. Not taxed unless you check "Taxed." The
+            Income page gets a per diem rate box and an hours box.
+          </Trans>
+        }
+      >
+        <SettingsRow
+          title={t('I get per diem')}
+          control={
+            <Checkbox
+              aria-label={t('I get per diem')}
+              checked={perDiem.enabled}
+              onChange={e => setPerDiem({ enabled: e.target.checked })}
+            />
+          }
+        />
+        {perDiem.enabled && (
+          <ItemRow>
+            <Field label={t('Per diem rate')}>
+              <NumberField
+                label={t('Per diem rate')}
+                prefix="$"
+                value={perDiem.rate}
+                onChange={rate => setPerDiem({ rate })}
+                width={70}
+              />
+            </Field>
+            <Field label={t('Starting hours')}>
+              <NumberField
+                label={t('Starting hours')}
+                value={perDiem.hours}
+                onChange={hours => setPerDiem({ hours })}
+                width={70}
+              />
+            </Field>
+            {byDay && income.paydays.length > 1 && (
+              <Field label={t('On')}>
+                <ChecksSelect
+                  value={perDiem.checks}
+                  paydays={income.paydays}
+                  onChange={checks => setPerDiem({ checks })}
+                />
+              </Field>
+            )}
+            <Field label={t('Taxed')}>
+              <View style={{ height: 28, justifyContent: 'center' }}>
+                <Checkbox
+                  aria-label={t('Taxed')}
+                  checked={perDiem.taxed}
+                  onChange={e => setPerDiem({ taxed: e.target.checked })}
+                />
+              </View>
+            </Field>
+          </ItemRow>
+        )}
       </SettingsGroup>
 
       <SettingsGroup

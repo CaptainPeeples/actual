@@ -12,8 +12,10 @@ import type {
   CheckRecord,
   Deduction,
   FederalRow,
+  HourLine,
   IncomeHistory,
   IncomeSettings,
+  MonthEntry,
   PaycheckLine,
   PaycheckResult,
   StateWithholding,
@@ -349,10 +351,23 @@ export function computeCheck(input: CheckInput): PaycheckResult {
     }));
   const hourTotal = sum(hourPay.map(l => l.amount));
 
+  // Per diem: taxed per diem is added to gross pay (as its own pay line);
+  // untaxed per diem is added to net pay after taxes.
+  const pd = income.perDiem;
+  const perDiemAmount =
+    pd?.enabled && applies(pd.checks, paydayId)
+      ? cents((pd.hours || 0) * (pd.rate || 0))
+      : 0;
+  const perDiemTaxed = pd?.taxed ? perDiemAmount : 0;
+  const perDiem = pd?.taxed ? 0 : perDiemAmount;
+  if (pd?.enabled && pd.taxed && applies(pd.checks, paydayId)) {
+    hourPay.push({ id: PER_DIEM_ID, name: 'Per diem', amount: perDiemTaxed });
+  }
+
   const extraPay = actual
-    ? cents(actual.gross - hourTotal)
+    ? cents(actual.gross - hourTotal - perDiemTaxed)
     : cents(record?.extraPay ?? 0);
-  const gross = cents(hourTotal + extraPay);
+  const gross = cents(hourTotal + perDiemTaxed + extraPay);
   // Extra pay (bonuses) is withheld at the flat supplemental rate. A
   // negative difference (fewer hours than usual) just lowers regular pay.
   const supplemental = Math.max(0, extraPay);
@@ -467,7 +482,7 @@ export function computeCheck(input: CheckInput): PaycheckResult {
   const posttaxTotal = sum(posttax.map(p => p.amount));
   const net = actual
     ? cents(actual.net)
-    : cents(gross - pretaxTotal - taxTotal - posttaxTotal);
+    : cents(gross - pretaxTotal - taxTotal - posttaxTotal + perDiem);
 
   return {
     date,
@@ -475,6 +490,7 @@ export function computeCheck(input: CheckInput): PaycheckResult {
     status: actual ? 'actual' : 'estimated',
     hourPay,
     extraPay,
+    perDiem,
     gross,
     imputed,
     pretax,
@@ -513,6 +529,74 @@ export type PaycheckConfig = {
   history: IncomeHistory;
 };
 
+// ---- Month-by-month values from the Income page's top bar ----
+
+export const PER_DIEM_ID = 'per-diem';
+
+// Key for one hours box: a pay line on one payday ('all' for schedules
+// without named paydays).
+export function hoursKey(lineId: string, paydayId: string | null): string {
+  return `${lineId}:${paydayId ?? 'all'}`;
+}
+
+export function monthEntry(
+  history: IncomeHistory,
+  month: string,
+): MonthEntry | undefined {
+  return history[month.slice(0, 4)]?.months?.[month];
+}
+
+// The newest value typed on or before this month (any year), so a raise
+// carries forward until it's changed again.
+export function carriedValue(
+  history: IncomeHistory,
+  month: string,
+  pick: (entry: MonthEntry) => number | undefined,
+): number | undefined {
+  let found: number | undefined;
+  let foundMonth = '';
+  for (const year of Object.values(history)) {
+    for (const [m, entry] of Object.entries(year.months ?? {})) {
+      const value = pick(entry);
+      if (value != null && m <= month && m >= foundMonth) {
+        found = value;
+        foundMonth = m;
+      }
+    }
+  }
+  return found;
+}
+
+// Income settings for one check, with that month's typed rate and hours
+// in place of the Settings defaults.
+export function incomeForCheck(
+  income: IncomeSettings,
+  history: IncomeHistory,
+  date: string,
+  paydayId: string | null,
+): IncomeSettings {
+  const month = date.slice(0, 7);
+  const entry = monthEntry(history, month);
+  const hours = (id: string, fallback: number) =>
+    entry?.hours?.[hoursKey(id, paydayId)] ?? fallback;
+  const rate = carriedValue(history, month, e => e.rate) ?? rateOn(income, date);
+  const pd = income.perDiem;
+  return {
+    ...income,
+    rates: [{ from: '', rate }],
+    hourLines: income.hourLines.map(l => ({ ...l, hours: hours(l.id, l.hours) })),
+    perDiem: pd
+      ? {
+          ...pd,
+          rate: carriedValue(history, month, e => e.perDiemRate) ?? pd.rate,
+          hours: hours(PER_DIEM_ID, pd.hours),
+        }
+      : undefined,
+  };
+}
+
+// ---- A whole year ----
+
 // Every check in a year, in pay-date order, each using the year-to-date
 // totals of the checks before it. If the year has a starting point from a
 // pay stub, checks after that date continue from it.
@@ -539,7 +623,7 @@ export function computeYear(
     const input: CheckInput = {
       date,
       paydayId,
-      income,
+      income: incomeForCheck(income, history, date, paydayId),
       tax,
       deductions,
       record: hist.checks?.[date],
@@ -556,29 +640,51 @@ export function computeYear(
   });
 }
 
-// Splits a check's net pay by hour line, in the order the lines are listed.
+// Splits a check's net pay by pay line, in the order the lines are listed.
 // The first line gets the net that check would have with only that line;
 // each later line gets what it adds on top. So base pay on a check with
 // extra hours nets the same as a base-only check, and the extra hours carry
-// the higher taxes. Bonuses and real-stub differences go in "Extra pay".
-export function netByLine(input: CheckInput, totalNet: number): PaycheckLine[] {
+// the higher taxes. Per diem and bonuses come last, each on its own line.
+export function netByLine(
+  input: CheckInput,
+  totalNet: number,
+): PaycheckLine[] {
   const { income, paydayId, record } = input;
   const own = income.hourLines.filter(l => applies(l.checks, paydayId));
   const out: PaycheckLine[] = [];
   let previous = 0;
-  own.forEach((line, i) => {
-    const net = computeCheck({
+  const netWith = (lines: HourLine[], withPerDiem: boolean) =>
+    computeCheck({
       ...input,
-      income: { ...income, hourLines: own.slice(0, i + 1) },
+      income: {
+        ...income,
+        hourLines: lines,
+        perDiem: withPerDiem ? income.perDiem : undefined,
+      },
       record: undefined,
     }).net;
+
+  own.forEach((line, i) => {
+    const net = netWith(own.slice(0, i + 1), false);
     out.push({ id: line.id, name: line.name, amount: cents(net - previous) });
     previous = net;
   });
+
+  const pd = income.perDiem;
+  if (pd?.enabled && applies(pd.checks, paydayId)) {
+    const net = netWith(own, true);
+    out.push({
+      id: PER_DIEM_ID,
+      name: 'Per diem',
+      amount: cents(net - previous),
+    });
+    previous = net;
+  }
+
   const rest = cents(totalNet - previous);
   if (rest !== 0) {
     if (record?.extraPay || record?.actual || out.length === 0) {
-      out.push({ id: 'extra', name: 'Extra pay', amount: rest });
+      out.push({ id: 'extra', name: 'Bonus', amount: rest });
     } else {
       const last = out[out.length - 1];
       last.amount = cents(last.amount + rest);

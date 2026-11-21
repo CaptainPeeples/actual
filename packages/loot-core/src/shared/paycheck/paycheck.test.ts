@@ -5,7 +5,9 @@ import {
   defaultTaxSettings,
   EMPTY_YTD,
   federalWithholding,
+  hoursKey,
   payDatesInYear,
+  PER_DIEM_ID,
   rateOn,
   stateWithholding,
   taxYearFor,
@@ -337,6 +339,137 @@ describe('net split by line', () => {
     expect(split[split.length - 1].id).toBe('extra');
     const sum = split.reduce((s, l) => s + l.amount, 0);
     expect(Number(sum.toFixed(2))).toBe(checks[0].net);
+  });
+});
+
+describe('month values from the top bar', () => {
+  const config = {
+    income: income(),
+    tax: tax({ state: 'TX' }),
+    deductions: [],
+    history: {},
+  };
+
+  it('uses typed hours for that month only', () => {
+    const checks = computeYear(2026, {
+      ...config,
+      history: {
+        '2026': {
+          checks: {},
+          months: { '2026-03': { hours: { [hoursKey('reg', 'a')]: 30 } } },
+        },
+      },
+    });
+    const march1 = checks.find(c => c.date === '2026-03-01');
+    const march15 = checks.find(c => c.date === '2026-03-15');
+    const april1 = checks.find(c => c.date === '2026-04-01');
+    expect(march1?.gross).toBe(3000);
+    expect(march15?.gross).toBe(4000);
+    expect(april1?.gross).toBe(4000);
+  });
+
+  it('carries a rate forward into later months and years', () => {
+    const history = {
+      '2026': { checks: {}, months: { '2026-06': { rate: 110 } } },
+    };
+    const y2026 = computeYear(2026, { ...config, history });
+    expect(y2026.find(c => c.date === '2026-05-15')?.gross).toBe(4000);
+    expect(y2026.find(c => c.date === '2026-06-01')?.gross).toBe(4400);
+    expect(y2026.find(c => c.date === '2026-12-15')?.gross).toBe(4400);
+    expect(computeYear(2027, { ...config, history })[0].gross).toBe(4400);
+  });
+
+  it('feeds typed hours into year-to-date for Social Security', () => {
+    const big = computeYear(2026, {
+      ...config,
+      history: {
+        '2026': {
+          checks: {},
+          months: { '2026-01': { hours: { [hoursKey('reg', 'a')]: 2000 } } },
+        },
+      },
+    });
+    // 2,000 x 100 = 200,000 in the first check: over the wage base, so
+    // every later check pays no Social Security.
+    expect(big[0].taxes.socialSecurity).toBe(11439);
+    expect(big[1].taxes.socialSecurity).toBe(0);
+  });
+});
+
+describe('per diem', () => {
+  const perDiem = {
+    enabled: true,
+    rate: 2.5,
+    hours: 100,
+    checks: ['b'] as string[],
+    taxed: false,
+  };
+
+  it('adds untaxed per diem to net pay only', () => {
+    const plain = computeYear(2026, {
+      income: income(),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {},
+    })[1];
+    const withPd = computeYear(2026, {
+      income: income({ perDiem }),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {},
+    })[1];
+    expect(withPd.perDiem).toBe(250);
+    expect(withPd.gross).toBe(plain.gross);
+    expect(withPd.taxTotal).toBe(plain.taxTotal);
+    expect(withPd.net).toBe(Number((plain.net + 250).toFixed(2)));
+    expect(withPd.netSplit.map(l => l.id)).toEqual(['reg', PER_DIEM_ID]);
+    expect(withPd.netSplit[1].amount).toBe(250);
+  });
+
+  it('adds taxed per diem to gross pay', () => {
+    const r = computeYear(2026, {
+      income: income({ perDiem: { ...perDiem, taxed: true } }),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {},
+    })[1];
+    expect(r.perDiem).toBe(0);
+    expect(r.gross).toBe(4250);
+    expect(r.hourPay.map(l => l.id)).toEqual(['reg', PER_DIEM_ID]);
+  });
+
+  it('uses typed per diem hours and the carried rate', () => {
+    const r = computeYear(2026, {
+      income: income({ perDiem }),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: {
+        '2026': {
+          checks: {},
+          months: {
+            '2026-01': {
+              perDiemRate: 3,
+              hours: { [hoursKey(PER_DIEM_ID, 'b')]: 50 },
+            },
+          },
+        },
+      },
+    });
+    expect(r[1].perDiem).toBe(150);
+    expect(r[3].perDiem).toBe(300);
+  });
+
+  it('names a bonus "Bonus" in the split', () => {
+    const r = computeYear(2026, {
+      income: income(),
+      tax: tax({ state: 'TX' }),
+      deductions: [],
+      history: { '2026': { checks: { '2026-01-01': { extraPay: 1000 } } } },
+    })[0];
+    expect(r.netSplit[r.netSplit.length - 1]).toMatchObject({
+      id: 'extra',
+      name: 'Bonus',
+    });
   });
 });
 

@@ -20,12 +20,21 @@ import { View } from '@actual-app/components/view';
 import { send } from '@actual-app/core/platform/client/connection';
 import * as monthUtils from '@actual-app/core/shared/months';
 import {
+  carriedValue,
   computeYear,
+  hoursKey,
+  monthEntry,
+  PER_DIEM_ID,
+  rateOn,
   stateInfo,
   taxYearFor,
   yearTotals,
 } from '@actual-app/core/shared/paycheck/paycheck';
-import type { PaycheckResult } from '@actual-app/core/shared/paycheck/types';
+import type {
+  CheckFilter,
+  MonthEntry,
+  PaycheckResult,
+} from '@actual-app/core/shared/paycheck/types';
 import { amountToInteger } from '@actual-app/core/shared/util';
 
 import { Link } from '#components/common/Link';
@@ -35,6 +44,7 @@ import { useCategories } from '#hooks/useCategories';
 import { useLocale } from '#hooks/useLocale';
 import { useSyncedPref } from '#hooks/useSyncedPref';
 
+import { Field, NumberField } from './fields';
 import { usePaycheckConfig } from './usePaycheckConfig';
 
 const usd = new Intl.NumberFormat('en-US', {
@@ -179,10 +189,16 @@ export function StatusBadge({ status }: { status: PaycheckResult['status'] }) {
 }
 
 // Row counts to pad each card to, so checks side by side line up.
-type CardRows = { pay: number; pretax: number; taxes: number; posttax: number };
+type CardRows = {
+  pay: number;
+  pretax: number;
+  taxes: number;
+  posttax: number;
+  perDiem: number;
+};
 
 function payRows(c: PaycheckResult) {
-  return c.hourPay.length + (c.extraPay !== 0 ? 1 : 0);
+  return c.hourPay.length;
 }
 function extraTaxRows(c: PaycheckResult) {
   return (c.taxes.local !== 0 ? 1 : 0) + c.taxes.other.length;
@@ -196,6 +212,7 @@ function cardRows(checks: PaycheckResult[]): CardRows {
     pretax: max(c => c.pretax.length),
     taxes: max(extraTaxRows),
     posttax: max(c => c.posttax.length),
+    perDiem: max(c => (c.perDiem !== 0 ? 1 : 0)),
   };
 }
 
@@ -216,11 +233,13 @@ function CheckCard({
   title,
   stateName,
   rows,
+  onBonus,
 }: {
   check: PaycheckResult;
   title: string;
   stateName: string | null;
   rows: CardRows;
+  onBonus: (amount: number) => void;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -252,10 +271,25 @@ function CheckCard({
         {check.hourPay.map(l => (
           <Line key={l.id} label={l.name} value={l.amount} />
         ))}
-        {check.extraPay !== 0 && (
-          <Line label={t('Extra pay')} value={check.extraPay} />
-        )}
         <Blanks count={rows.pay - payRows(check)} />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Text>
+            <Trans>Bonus</Trans>
+          </Text>
+          <NumberField
+            label={t('Bonus')}
+            prefix="$"
+            value={check.extraPay}
+            onChange={onBonus}
+            width={90}
+          />
+        </View>
         <Line label={t('Gross pay')} value={check.gross} bold />
 
         {rows.pretax > 0 && (
@@ -299,6 +333,26 @@ function CheckCard({
             ))}
             <Blanks count={rows.posttax - check.posttax.length} />
           </>
+        )}
+
+        {rows.perDiem > 0 && (
+          <View
+            style={{
+              marginTop: spacing.sm,
+              paddingTop: spacing.sm,
+              borderTop: `1px solid ${theme.tableBorder}`,
+            }}
+          >
+            {check.perDiem !== 0 ? (
+              <Line
+                label={t('Per diem')}
+                value={check.perDiem}
+                note={t('not taxed')}
+              />
+            ) : (
+              <Blanks count={1} />
+            )}
+          </View>
         )}
 
         <View
@@ -526,10 +580,124 @@ function MonthNav({
   );
 }
 
+// The thin bar under the month: this month's hourly rate and hours. The
+// boxes come from Settings → Income (one per pay line and check it's on).
+// A rate carries forward to later months; hours are for this month only.
+function MonthBar({ month }: { month: string }) {
+  const { t } = useTranslation();
+  const { income, history, setHistory } = usePaycheckConfig();
+  const yearKey = month.slice(0, 4);
+  const entry = monthEntry(history, month) ?? {};
+  const byDay =
+    income.frequency === 'semimonthly' || income.frequency === 'monthly';
+  const paydays = byDay ? income.paydays : [];
+
+  const save = (next: MonthEntry) => {
+    const year = history[yearKey] ?? { checks: {} };
+    setHistory({
+      ...history,
+      [yearKey]: { ...year, months: { ...year.months, [month]: next } },
+    });
+  };
+  const setHours = (key: string, hours: number) =>
+    save({ ...entry, hours: { ...entry.hours, [key]: hours } });
+
+  // One box per line, per payday it's on (or one box when paydays aren't
+  // named, like weekly pay).
+  const boxesFor = (
+    id: string,
+    name: string,
+    checks: CheckFilter,
+    fallback: number,
+  ) => {
+    const days = paydays.filter(p => checks === 'all' || checks.includes(p.id));
+    const targets: Array<{ paydayId: string | null; label: string }> =
+      days.length === 0
+        ? [{ paydayId: null, label: name }]
+        : days.map(p => ({
+            paydayId: p.id,
+            label:
+              checks === 'all' && paydays.length > 1
+                ? `${name} (${p.name})`
+                : name,
+          }));
+    return targets.map(({ paydayId, label }) => {
+      const key = hoursKey(id, paydayId);
+      return (
+        <Field key={key} label={label}>
+          <NumberField
+            label={label}
+            value={entry.hours?.[key] ?? fallback}
+            onChange={hours => setHours(key, hours)}
+            width={70}
+          />
+        </Field>
+      );
+    });
+  };
+
+  const rate =
+    carriedValue(history, month, e => e.rate) ?? rateOn(income, `${month}-01`);
+  const pd = income.perDiem?.enabled ? income.perDiem : null;
+  const perDiemRate = pd
+    ? (carriedValue(history, month, e => e.perDiemRate) ?? pd.rate)
+    : 0;
+  const hasOwnHours = Object.keys(entry.hours ?? {}).length > 0;
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'flex-end',
+        gap: spacing.md,
+        flexShrink: 0,
+        padding: `${spacing.sm}px ${spacing.lg}px`,
+        backgroundColor: theme.tableBackground,
+        border: `1px solid ${theme.tableBorder}`,
+        borderRadius: 6,
+      }}
+    >
+      <Field label={t('Hourly rate')}>
+        <NumberField
+          label={t('Hourly rate')}
+          prefix="$"
+          value={rate}
+          onChange={value => save({ ...entry, rate: value })}
+          width={80}
+        />
+      </Field>
+      {pd && (
+        <Field label={t('Per diem rate')}>
+          <NumberField
+            label={t('Per diem rate')}
+            prefix="$"
+            value={perDiemRate}
+            onChange={value => save({ ...entry, perDiemRate: value })}
+            width={70}
+          />
+        </Field>
+      )}
+      {income.hourLines.map(l => boxesFor(l.id, l.name, l.checks, l.hours))}
+      {pd && boxesFor(PER_DIEM_ID, t('Per diem hours'), pd.checks, pd.hours)}
+      {hasOwnHours && (
+        <Button
+          variant="bare"
+          onPress={() => save({ ...entry, hours: undefined })}
+          style={{ ...styles.smallText }}
+        >
+          <Trans>Reset hours</Trans>
+        </Button>
+      )}
+    </View>
+  );
+}
+
 export function IncomePage() {
   const { t } = useTranslation();
   const { isNarrowWidth } = useResponsive();
-  const { config, income, tax, isSetUp } = usePaycheckConfig();
+  const { config, income, tax, history, setHistory, isSetUp } =
+    usePaycheckConfig();
   const [budgetType = 'envelope'] = useSyncedPref('budgetType');
   const [month, setMonth] = useState(() => monthUtils.currentMonth());
   const year = Number(month.slice(0, 4));
@@ -553,6 +721,26 @@ export function IncomePage() {
     byDay && income.paydays.length > 1
       ? t('{{name}} check', { name: paydayName(c.paydayId) })
       : t('Paycheck');
+  const setBonus = (date: string, amount: number) => {
+    const yearKey = date.slice(0, 4);
+    const yearHistory = history[yearKey] ?? { checks: {} };
+    const record = { ...yearHistory.checks?.[date] };
+    if (amount) {
+      record.extraPay = amount;
+    } else {
+      delete record.extraPay;
+    }
+    const checksNext = { ...yearHistory.checks };
+    if (Object.keys(record).length > 0) {
+      checksNext[date] = record;
+    } else {
+      delete checksNext[date];
+    }
+    setHistory({
+      ...history,
+      [yearKey]: { ...yearHistory, checks: checksNext },
+    });
+  };
   const keyOf = (c: PaycheckResult) => (byDay ? (c.paydayId ?? 'all') : 'all');
   const labelOf = (key: string) =>
     key === 'all'
@@ -575,6 +763,8 @@ export function IncomePage() {
           <SetupNote />
         ) : (
           <>
+            <MonthBar month={month} />
+
             {checks.length === 0 ? (
               <Card>
                 <Text style={{ color: theme.pageTextSubdued }}>
@@ -598,6 +788,7 @@ export function IncomePage() {
                     title={titleOf(c)}
                     stateName={stateName}
                     rows={rows}
+                    onBonus={amount => setBonus(c.date, amount)}
                   />
                 ))}
               </View>
